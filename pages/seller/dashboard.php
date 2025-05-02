@@ -11,7 +11,7 @@ include_once("../../includes/header.php");
 ?>
 
 <div class="dashboard-container">
-    <h1>Seller Dashboard</h1>
+    <h1>[sellername]'s Dashboard</h1>
 
     <div class="summary-cards">
         <div class="card">
@@ -29,7 +29,7 @@ include_once("../../includes/header.php");
     </div>
 
     <div class="dashboard-section">
-        <h2>Recent Sales</h2>
+        <h2>Recent Orders</h2>
         <div class="table-wrapper">
             <table class="dashboard-table">
                 <thead>

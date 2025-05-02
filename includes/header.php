@@ -30,10 +30,10 @@ if (session_status() === PHP_SESSION_NONE) {
                 <?php elseif ($_SESSION['user_type'] == 'seller'): ?>
                 <a href="/daintyscapes/pages/seller/dashboard.php">Dashboard</a>
                 <a href="/daintyscapes/pages/seller/products.php">Your Products</a>
-                <a href="/daintyscapes/pages/seller/analytics.php">Sales and Analytics</a>
+                <!-- <a href="/daintyscapes/pages/seller/analytics.php">Sales and Analytics</a> -->
                 <a href="/daintyscapes/pages/seller/orders.php">Orders</a>
-                <a href="/daintyscapes/pages/seller/payments.php">Payment Details</a>
-                <a href="/daintyscapes/pages/seller/shipping.php">Shipping Information</a>
+                <!-- <a href="/daintyscapes/pages/seller/payments.php">Payment Details</a> -->
+                <!-- <a href="/daintyscapes/pages/seller/shipping.php">Shipping Information</a> -->
             
             
                 <?php endif; ?>
@@ -45,10 +45,10 @@ if (session_status() === PHP_SESSION_NONE) {
             <?php endif; ?>
     </nav>
 
-    <button id="theme-toggle">🌙</button>
+    <!-- <button id="theme-toggle">🌙</button> -->
 </header>
 
-<script src="/daintyscapes/assets/js/theme-toggle.js"></script>
+<!-- <script src="/daintyscapes/assets/js/theme-toggle.js"></script> -->
 
 </body>
 </html>

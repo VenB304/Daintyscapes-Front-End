@@ -1,75 +1,89 @@
-
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+session_start();
+if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'seller') {
+    header("Location: /daintyscapes/login.php");
+    exit;
 }
-include_once '../../includes/header.php';
+include_once($_SERVER['DOCUMENT_ROOT'] . '/daintyscapes/includes/header.php');
+
+// Demo product list
+$products = [
+    [
+        'id' => 1,
+        'name' => 'Handmade Vase',
+        'price' => 25.99,
+        'stock' => 12,
+        'image' => '/daintyscapes/assets/images/vase.jpg'
+    ],
+    [
+        'id' => 2,
+        'name' => 'Woven Basket',
+        'price' => 15.50,
+        'stock' => 8,
+        'image' => '/daintyscapes/assets/images/basket.jpg'
+    ],
+];
 ?>
 
+<div class="page-container">
+    <h1>Your Products</h1>
+    <div class="product-grid">
+        <?php foreach ($products as $product): ?>
+            <div class="product-card">
+                <img src="<?= $product['image'] ?>" alt="<?= $product['name'] ?>">
+                <h3><?= $product['name'] ?></h3>
+                <p>Price: ₱<?= number_format($product['price'], 2) ?></p>
+                <p>Stock: <?= $product['stock'] ?></p>
+                <div class="product-actions">
+                    <button onclick="openModifyPopup(<?= $product['id'] ?>)">Modify</button>
+                    <button onclick="removeProduct(<?= $product['id'] ?>)">Remove</button>
+                    <a href="customizations.php?product_id=<?= $product['id'] ?>"><button>Customize</button></a>
+                    <a href="inventory.php?product_id=<?= $product['id'] ?>"><button>Inventory</button></a>
+                </div>
 
-<div class="top-bar">
-    <h2>Your Products</h2>
-    <button onclick="openAddModal()">Add Product</button>
-</div>
-
-<div class="product-container">
-    <div class="product-card">
-        <img src="https://via.placeholder.com/200x150" alt="Product Image">
-        <h3>Custom Wall Art</h3>
-        <p>Price: $120</p>
-        <p>Stock: 10</p>
-        <p>Status: Active</p>
-        <button onclick="openEditModal('Custom Wall Art', 120, 10)">Edit</button>
-        <button>Remove</button>
-    </div>
-
-    <div class="product-card">
-        <img src="https://via.placeholder.com/200x150" alt="Product Image">
-        <h3>Artisan Necklace</h3>
-        <p>Price: $60</p>
-        <p>Stock: 5</p>
-        <p>Status: Active</p>
-        <button onclick="openEditModal('Artisan Necklace', 60, 5)">Edit</button>
-        <button>Remove</button>
+            </div>
+        <?php endforeach; ?>
     </div>
 </div>
 
-<!-- Modal -->
-<div id="productModal" class="modal">
-    <div class="modal-content">
-        <h3 id="modalTitle">Add Product</h3>
-        <input type="text" id="productName" placeholder="Product Name">
-        <input type="number" id="productPrice" placeholder="Price">
-        <input type="number" id="productStock" placeholder="Stock">
-        <textarea id="productDescription" placeholder="Description"></textarea>
-        <input type="text" id="productImage" placeholder="Image URL">
-        <button onclick="closeModal()">Save</button>
-        <button onclick="closeModal()">Cancel</button>
-    </div>
+<!-- Edit Details Popup -->
+<div id="edit-details-popup" class="popup hidden">
+    <h3>Edit Product Details</h3>
+    <input type="text" placeholder="Product Name">
+    <input type="number" step="0.01" placeholder="Price">
+    <textarea placeholder="Description"></textarea>
+    <button onclick="saveEditDetails()">Save</button>
+    <button onclick="closePopup('edit-details-popup')">Cancel</button>
+</div>
+
+<!-- Edit Stock Popup -->
+<div id="edit-stock-popup" class="popup hidden">
+    <h3>Edit Stock</h3>
+    <input type="number" placeholder="Stock Quantity">
+    <button onclick="saveEditStock()">Save</button>
+    <button onclick="closePopup('edit-stock-popup')">Cancel</button>
 </div>
 
 <script>
-    function openAddModal() {
-        document.getElementById('modalTitle').innerText = "Add Product";
-        document.getElementById('productName').value = "";
-        document.getElementById('productPrice').value = "";
-        document.getElementById('productStock').value = "";
-        document.getElementById('productDescription').value = "";
-        document.getElementById('productImage').value = "";
-        document.getElementById('productModal').style.display = "flex";
-    }
+function openEditDetails(id) {
+    document.getElementById('edit-details-popup').classList.remove('hidden');
+}
 
-    function openEditModal(name, price, stock) {
-        document.getElementById('modalTitle').innerText = "Edit Product";
-        document.getElementById('productName').value = name;
-        document.getElementById('productPrice').value = price;
-        document.getElementById('productStock').value = stock;
-        document.getElementById('productDescription').value = "";
-        document.getElementById('productImage').value = "";
-        document.getElementById('productModal').style.display = "flex";
-    }
+function openEditStock(id) {
+    document.getElementById('edit-stock-popup').classList.remove('hidden');
+}
 
-    function closeModal() {
-        document.getElementById('productModal').style.display = "none";
-    }
+function closePopup(popupId) {
+    document.getElementById(popupId).classList.add('hidden');
+}
+
+function saveEditDetails() {
+    alert("Details updated (demo only)");
+    closePopup('edit-details-popup');
+}
+
+function saveEditStock() {
+    alert("Stock updated (demo only)");
+    closePopup('edit-stock-popup');
+}
 </script>
