@@ -14,24 +14,24 @@ $products = [
     [
         'id' => 1,
         'name' => 'Sunset Canvas',
-        'price' => 120,
-        'stock' => 15,
+        'base_price' => 120,
+        'available_quantity' => 15,
         'image' => '/daintyscapes/assets/img/sunset.webp',
         'description' => 'A vibrant sunset canvas to brighten up your room.'
     ],
     [
         'id' => 2,
         'name' => 'Forest Poster',
-        'price' => 75,
-        'stock' => 5,
+        'base_price' => 75,
+        'available_quantity' => 5,
         'image' => '/daintyscapes/assets/img/forest.jfif',
         'description' => 'A calming forest poster with deep greens.'
     ],
     [
         'id' => 3,
         'name' => 'Ocean Art Print',
-        'price' => 90,
-        'stock' => 0,
+        'base_price' => 90,
+        'available_quantity' => 0,
         'image' => '/daintyscapes/assets/img/ocean.webp',
         'description' => 'Soothing ocean waves captured in print.'
     ]
@@ -68,7 +68,7 @@ if ($sort === 'price_asc') {
         <input type="number" name="min_price" placeholder="Min Price" value="<?= htmlspecialchars($minPrice) ?>">
         <input type="number" name="max_price" placeholder="Max Price" value="<?= htmlspecialchars($maxPrice) ?>">
         <select name="sort">
-            <option value="">Sort by</option>
+            <option value="">Default</option>
             <option value="price_asc" <?= $sort === 'price_asc' ? 'selected' : '' ?>>Price: Low to High</option>
             <option value="price_desc" <?= $sort === 'price_desc' ? 'selected' : '' ?>>Price: High to Low</option>
         </select>
@@ -81,8 +81,8 @@ if ($sort === 'price_asc') {
                 <a href="product.php?id=<?= $product['id'] ?>">
                     <img src="<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>">
                     <h3><?= htmlspecialchars($product['name']) ?></h3>
-                    <p>Price: ₱<?= $product['price'] ?></p>
-                    <p>Stock: <?= $product['stock'] ?></p>
+                    <p>Price: ₱<?= $product['base_price'] ?></p>
+                    <p>Stock: <?= $product['available_quantity'] ?></p>
                 </a>
             </div>
         <?php endforeach; ?>

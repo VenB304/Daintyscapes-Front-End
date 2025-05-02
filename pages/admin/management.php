@@ -107,7 +107,7 @@ $sellers = [
     };
     </script>
 </head>
-<body class="dark-mode">
+<body class="page-container">
     <?php include($_SERVER['DOCUMENT_ROOT'] . '/daintyscapes/includes/header.php'); ?>
 
     <div class="management-container">

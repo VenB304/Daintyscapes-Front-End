@@ -56,11 +56,42 @@ $product = $products[$id];
             <p><strong>Description:</strong></p>
             <p><?= htmlspecialchars($product['description']) ?></p>
 
+            
+
             <?php if ($product['stock'] > 0): ?>
-                <form method="POST" action="add_to_cart.php">
-                <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-                <button type="submit" class="add-cart">Add to Cart</button>
-            </form>
+                <!-- Product Customizations -->
+                <h4>Customize Your Product</h3>
+                <br>
+                <label for="color">Choose a color:</label>
+                <select name="customization[color]" id="color" required>
+                    <option value="">-- Select --</option>
+                    <option value="Red">Red</option>
+                    <option value="Blue">Blue</option>
+                    <option value="Green">Green</option>
+                </select>
+
+                <label for="charm">Choose a charm:</label>
+                <select name="customization[charm]" id="charm" required>
+                    <option value="">-- Select --</option>
+                    <option value="Star">Star</option>
+                    <option value="Moon">Moon</option>
+                    <option value="Heart">Heart</option>
+                </select>
+
+                <!-- Quantity Controls -->
+                <div class="quantity-control">
+                    <button type="button" onclick="changeQuantity(-1)">−</button>
+                    <input type="number" id="quantity" name="quantity" value="1" min="1" max="<?= $product['stock'] ?>" required>
+                    <button type="button" onclick="changeQuantity(1)">+</button>
+                </div>
+
+                                <form method="POST" action="add_to_cart.php">
+                    <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+                    <input type="hidden" name="size" value="Medium"> <!-- For demo, not functional -->
+                    <input type="hidden" name="frame" value="Wooden"> <!-- For demo, not functional -->
+                    <button type="submit" class="add-cart">Add to Cart</button>
+                </form>
+
 
             <?php else: ?>
                 <p class="out-of-stock">Out of stock</p>

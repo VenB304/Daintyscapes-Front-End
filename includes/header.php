@@ -24,6 +24,7 @@ if (session_status() === PHP_SESSION_NONE) {
             <?php if ($_SESSION['user_type'] == 'buyer'): ?>
                 <a href="/daintyscapes/pages/buyer/catalog.php">Catalog</a>
                 <a href="/daintyscapes/pages/buyer/cart.php">Cart</a>
+                <a href="/daintyscapes/pages/buyer/orders.php">Orders</a>
                 <a href="/daintyscapes/pages/buyer/profile.php">Profile</a>
             
             
@@ -44,11 +45,6 @@ if (session_status() === PHP_SESSION_NONE) {
                 <a href="/daintyscapes/register.php">Register</a>
             <?php endif; ?>
     </nav>
-
-    <!-- <button id="theme-toggle">🌙</button> -->
 </header>
-
-<!-- <script src="/daintyscapes/assets/js/theme-toggle.js"></script> -->
-
 </body>
 </html>

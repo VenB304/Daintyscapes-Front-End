@@ -13,7 +13,10 @@ $userData = [
     'fullname' => 'Alex Rivera',
     'username' => 'alex123',
     'email'    => 'alex@example.com',
-    'address'  => '123 Main Street, Manila'
+    'country'  => 'Philippines',
+    'city'     => 'Cebu City',
+    'postal_code' => '6000',
+    'phone_number' => '09123456789'
 ];
 
 // Simulate update
@@ -22,7 +25,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $userData['fullname'] = $_POST['fullname'];
     $userData['username'] = $_POST['username'];
     $userData['email']    = $_POST['email'];
-    $userData['address']  = $_POST['address'];
+    $userData['country']  = $_POST['country'];
+    $userData['city']     = $_POST['city'];
+    $userData['postal_code'] = $_POST['postal_code'];
+    $userData['phone_number'] = $_POST['phone_number'];
     $updated = true;
 }
 ?>
@@ -43,9 +49,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <label>Email</label>
         <input type="email" name="email" value="<?= htmlspecialchars($userData['email']) ?>" required>
-
+        
+        <label>Phone Number</label>
+        <input type="text" name="phone_number" value="<?= htmlspecialchars($userData['phone_number']) ?>">
+        <br>
         <label>Address</label>
-        <input type="text" name="address" value="<?= htmlspecialchars($userData['address']) ?>">
+        <label>Country</label>
+        <input type="text" name="country" value="<?= htmlspecialchars($userData['country']) ?>">
+        <label>City</label>
+        <input type="text" name="city" value="<?= htmlspecialchars($userData['city']) ?>">
+        <label>Postal Code</label>
+        <input type="text" name="postal_code" value="<?= htmlspecialchars($userData['postal_code']) ?>">
+        
+        
 
         <button type="submit">Update Profile</button>
     </form>
