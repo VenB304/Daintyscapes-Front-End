@@ -13,64 +13,84 @@ $products = [
         'name' => 'Handmade Vase',
         'price' => 25.99,
         'stock' => 12,
-        'image' => '/daintyscapes/assets/images/vase.jpg'
+        'description' => 'A beautiful handmade vase.',
+        'image' => '/daintyscapes/assets/img/forest.jfif'
     ],
     [
         'id' => 2,
         'name' => 'Woven Basket',
         'price' => 15.50,
         'stock' => 8,
-        'image' => '/daintyscapes/assets/images/basket.jpg'
+        'description' => 'A durable woven basket.',
+        'image' => '/daintyscapes/assets/img/sunset.webp'
     ],
 ];
 ?>
+<head>
+  <link rel="stylesheet" href="/daintyscapes/assets/css/styles.css"> 
+</head>
 
 <div class="page-container">
     <h1>Your Products</h1>
-    <div class="product-grid">
-        <?php foreach ($products as $product): ?>
-            <div class="product-card">
-                <img src="<?= $product['image'] ?>" alt="<?= $product['name'] ?>">
-                <h3><?= $product['name'] ?></h3>
-                <p>Price: ₱<?= number_format($product['price'], 2) ?></p>
-                <p>Stock: <?= $product['stock'] ?></p>
-                <div class="product-actions">
-                    <button onclick="openModifyPopup(<?= $product['id'] ?>)">Modify</button>
+
+    <table class="product-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($products as $product): ?>
+            <tr>
+                <td><?= $product['id'] ?></td>
+                <td><img src="<?= $product['image'] ?>" alt="<?= $product['name'] ?>" style="width: 60px; height: auto;"></td>
+                <td><?= htmlspecialchars($product['name']) ?></td>
+                <td>₱<?= number_format($product['price'], 2) ?></td>
+                <td><?= $product['stock'] ?></td>
+                <td>
+                    <button onclick="openEditDetails(<?= $product['id'] ?>)">Modify</button>
                     <button onclick="removeProduct(<?= $product['id'] ?>)">Remove</button>
                     <a href="customizations.php?product_id=<?= $product['id'] ?>"><button>Customize</button></a>
-                    <a href="inventory.php?product_id=<?= $product['id'] ?>"><button>Inventory</button></a>
-                </div>
-
-            </div>
-        <?php endforeach; ?>
-    </div>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
 </div>
 
-<!-- Edit Details Popup -->
+<!-- Edit Product Popup -->
 <div id="edit-details-popup" class="popup hidden">
     <h3>Edit Product Details</h3>
-    <input type="text" placeholder="Product Name">
-    <input type="number" step="0.01" placeholder="Price">
-    <textarea placeholder="Description"></textarea>
+    <input type="hidden" id="edit-product-id">
+    <input type="text" id="edit-product-name" placeholder="Product Name">
+    <input type="number" id="edit-product-price" step="0.01" placeholder="Price">
+    <textarea id="edit-product-description" placeholder="Description"></textarea>
     <button onclick="saveEditDetails()">Save</button>
     <button onclick="closePopup('edit-details-popup')">Cancel</button>
 </div>
 
-<!-- Edit Stock Popup -->
-<div id="edit-stock-popup" class="popup hidden">
-    <h3>Edit Stock</h3>
-    <input type="number" placeholder="Stock Quantity">
-    <button onclick="saveEditStock()">Save</button>
-    <button onclick="closePopup('edit-stock-popup')">Cancel</button>
-</div>
-
 <script>
-function openEditDetails(id) {
-    document.getElementById('edit-details-popup').classList.remove('hidden');
-}
+const products = <?= json_encode($products) ?>;
 
-function openEditStock(id) {
-    document.getElementById('edit-stock-popup').classList.remove('hidden');
+function openEditDetails(id) {
+    // Find the product by ID
+    const product = products.find(p => p.id === id);
+
+    if (product) {
+        // Populate the popup fields with the product details
+        document.getElementById('edit-product-id').value = product.id;
+        document.getElementById('edit-product-name').value = product.name;
+        document.getElementById('edit-product-price').value = product.price;
+        document.getElementById('edit-product-description').value = product.description || ''; // Add description if available
+    }
+
+    // Show the popup
+    document.getElementById('edit-details-popup').classList.remove('hidden');
 }
 
 function closePopup(popupId) {
@@ -78,12 +98,20 @@ function closePopup(popupId) {
 }
 
 function saveEditDetails() {
-    alert("Details updated (demo only)");
+    // Get the updated details from the popup
+    const id = document.getElementById('edit-product-id').value;
+    const name = document.getElementById('edit-product-name').value;
+    const price = document.getElementById('edit-product-price').value;
+    const description = document.getElementById('edit-product-description').value;
+
+    // For demo purposes, just show an alert
+    alert(`Product ID ${id} updated with Name: ${name}, Price: ${price}, Description: ${description}`);
+
+    // Close the popup
     closePopup('edit-details-popup');
 }
 
-function saveEditStock() {
-    alert("Stock updated (demo only)");
-    closePopup('edit-stock-popup');
+function removeProduct(id) {
+    alert("Product ID " + id + " removed (demo only)");
 }
 </script>

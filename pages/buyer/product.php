@@ -8,7 +8,6 @@ if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'buyer') {
 
 include_once '../../includes/header.php';
 
-// Demo products
 $products = [
     1 => [
         'id' => 1,
@@ -47,55 +46,81 @@ $product = $products[$id];
 ?>
 
 <div class="page-container">
-    <div class="product-detail">
-        <img src="<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>">
-        <div class="product-info">
-            <h2><?= htmlspecialchars($product['name']) ?></h2>
-            <p><strong>Price:</strong> ₱<?= $product['price'] ?></p>
-            <p><strong>Stock:</strong> <?= $product['stock'] ?></p>
-            <p><strong>Description:</strong></p>
-            <p><?= htmlspecialchars($product['description']) ?></p>
+    <div class="product-detail-container">
+        <!-- Product Image -->
+        <div class="product-image">
+            <img src="<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+        </div>
 
-            
+        <!-- Product Information -->
+        <div class="product-info">
+            <h1 class="product-title"><?= htmlspecialchars($product['name']) ?></h1>
+            <p class="product-price">₱<?= number_format($product['price'], 2) ?></p>
+            <p class="product-stock"><?= $product['stock'] > 0 ? "In Stock: {$product['stock']}" : "Out of Stock" ?></p>
+            <p class="product-description"><?= htmlspecialchars($product['description']) ?></p>
 
             <?php if ($product['stock'] > 0): ?>
-                <!-- Product Customizations -->
-                <h4>Customize Your Product</h3>
-                <br>
-                <label for="color">Choose a color:</label>
-                <select name="customization[color]" id="color" required>
-                    <option value="">-- Select --</option>
-                    <option value="Red">Red</option>
-                    <option value="Blue">Blue</option>
-                    <option value="Green">Green</option>
-                </select>
+                <!-- Customization Options -->
+                <div class="customization-options">
+                    <label for="color">Choose a color:</label>
+                    <select name="customization[color]" id="color" required>
+                        <option value="">-- Select --</option>
+                        <option value="Red">Red</option>
+                        <option value="Blue">Blue</option>
+                        <option value="Green">Green</option>
+                    </select>
 
-                <label for="charm">Choose a charm:</label>
-                <select name="customization[charm]" id="charm" required>
-                    <option value="">-- Select --</option>
-                    <option value="Star">Star</option>
-                    <option value="Moon">Moon</option>
-                    <option value="Heart">Heart</option>
-                </select>
+                    <label for="charm">Choose a charm:</label>
+                    <select name="customization[charm]" id="charm" required>
+                        <option value="">-- Select --</option>
+                        <option value="Star">Star</option>
+                        <option value="Moon">Moon</option>
+                        <option value="Heart">Heart</option>
+                    </select>
+                </div>
 
                 <!-- Quantity Controls -->
                 <div class="quantity-control">
-                    <button type="button" onclick="changeQuantity(-1)">−</button>
-                    <input type="number" id="quantity" name="quantity" value="1" min="1" max="<?= $product['stock'] ?>" required>
-                    <button type="button" onclick="changeQuantity(1)">+</button>
+                    <label for="quantity">Quantity:</label>
+                    <div class="quantity-buttons">
+                        <button type="button" onclick="changeQuantity(-1)">−</button>
+                        <input type="number" id="quantity" name="quantity" value="1" min="1" max="<?= $product['stock'] ?>" required>
+                        <button type="button" onclick="changeQuantity(1)">+</button>
+                    </div>
                 </div>
 
-                                <form method="POST" action="add_to_cart.php">
+                <!-- Add to Cart Button -->
+                <form method="POST" action="add_to_cart.php">
                     <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-                    <input type="hidden" name="size" value="Medium"> <!-- For demo, not functional -->
-                    <input type="hidden" name="frame" value="Wooden"> <!-- For demo, not functional -->
-                    <button type="submit" class="add-cart">Add to Cart</button>
+                    <input type="hidden" name="quantity" id="hidden-quantity" value="1">
+                    <input type="hidden" name="custom_color" id="hidden-color">
+                    <input type="hidden" name="custom_charm" id="hidden-charm">
+                    <button type="submit" class="add-cart" onclick="syncSelections()">Add to Cart</button>
                 </form>
-
-
             <?php else: ?>
-                <p class="out-of-stock">Out of stock</p>
+                <p class="out-of-stock">This product is currently out of stock.</p>
             <?php endif; ?>
         </div>
     </div>
 </div>
+
+<script>
+function changeQuantity(amount) {
+    const input = document.getElementById('quantity');
+    let val = parseInt(input.value);
+    const max = parseInt(input.max);
+
+    val += amount;
+    if (val < 1) val = 1;
+    if (val > max) val = max;
+
+    input.value = val;
+}
+
+// Copy user input to hidden fields for submission
+function syncSelections() {
+    document.getElementById('hidden-quantity').value = document.getElementById('quantity').value;
+    document.getElementById('hidden-color').value = document.getElementById('color').value;
+    document.getElementById('hidden-charm').value = document.getElementById('charm').value;
+}
+</script>

@@ -1,8 +1,10 @@
 <?php
 session_start();
+include_once 'includes/db.php'; // Include the database connection
 
-if (isset($_SESSION['user_type'])) {
-    switch ($_SESSION['user_type']) {
+// Redirect logged-in users based on their role
+if (isset($_SESSION['role'])) {
+    switch ($_SESSION['role']) {
         case 'buyer':
             header("Location: /daintyscapes/pages/buyer/catalog.php");
             exit();
@@ -15,32 +17,41 @@ if (isset($_SESSION['user_type'])) {
     }
 }
 
-// Fake user database (replace with DB query later)
-$users = [
-    'buyer1' => ['password' => 'pass123', 'type' => 'buyer'],
-    'seller1' => ['password' => 'sell123', 'type' => 'seller'],
-    'admin' => ['password' => 'admin123', 'type' => 'admin'],
-];
-
-// Handle POST
+// Handle POST request for login
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
 
-    if (isset($users[$username]) && $users[$username]['password'] === $password) {
-        $_SESSION['username'] = $username;
-        $_SESSION['user_type'] = $users[$username]['type'];
+    // Query the database for the user
+    $stmt = $conn->prepare("SELECT user_id, username, password_hash, role FROM users WHERE username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
-        // 🚨 DO REDIRECT *before* any HTML or includes
-        if ($_SESSION['user_type'] === 'buyer') {
-            header("Location: /daintyscapes/pages/buyer/catalog.php");
-            exit();
-        } elseif ($_SESSION['user_type'] === 'seller') {
-            header("Location: /daintyscapes/pages/seller/dashboard.php");
-            exit();
-        } elseif ($_SESSION['user_type'] === 'admin') {
-            header("Location: /daintyscapes/pages/admin/management.php");
-            exit();
+    if ($result->num_rows === 1) {
+        $user = $result->fetch_assoc();
+
+        // Verify the password using password_verify()
+        if (password_verify($password, $user['password_hash'])) {
+            // Set session variables
+            $_SESSION['user_id'] = $user['user_id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['role'] = $user['role'];
+
+            // Redirect based on user role
+            switch ($user['role']) {
+                case 'buyer':
+                    header("Location: /daintyscapes/pages/buyer/catalog.php");
+                    exit();
+                case 'seller':
+                    header("Location: /daintyscapes/pages/seller/dashboard.php");
+                    exit();
+                case 'admin':
+                    header("Location: /daintyscapes/pages/admin/management.php");
+                    exit();
+            }
+        } else {
+            $error = "Invalid username or password.";
         }
     } else {
         $error = "Invalid username or password.";

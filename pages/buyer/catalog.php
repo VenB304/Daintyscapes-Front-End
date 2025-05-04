@@ -2,7 +2,7 @@
 session_start();
 
 // Redirect if not a buyer
-if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'buyer') {
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'buyer') {
     header('Location: /daintyscapes/login.php');
     exit();
 }
@@ -47,16 +47,16 @@ $filteredProducts = array_filter($products, function ($product) use ($search, $m
     $matchesName = stripos($product['name'], $search) !== false;
     $matchesPrice = true;
 
-    if ($minPrice !== '' && $product['price'] < $minPrice) $matchesPrice = false;
-    if ($maxPrice !== '' && $product['price'] > $maxPrice) $matchesPrice = false;
+    if ($minPrice !== '' && $product['base_price'] < $minPrice) $matchesPrice = false;
+    if ($maxPrice !== '' && $product['base_price'] > $maxPrice) $matchesPrice = false;
 
     return $matchesName && $matchesPrice;
 });
 
 if ($sort === 'price_asc') {
-    usort($filteredProducts, fn($a, $b) => $a['price'] <=> $b['price']);
+    usort($filteredProducts, fn($a, $b) => $a['base_price'] <=> $b['base_price']);
 } elseif ($sort === 'price_desc') {
-    usort($filteredProducts, fn($a, $b) => $b['price'] <=> $a['price']);
+    usort($filteredProducts, fn($a, $b) => $b['base_price'] <=> $a['base_price']);
 }
 ?>
 
