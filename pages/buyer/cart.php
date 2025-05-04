@@ -61,6 +61,7 @@ $total = 0;
                 <?php foreach ($cart as $productId => $qty):
                     $product = $products[$productId];
                     $subtotal = $product['price'] * $qty;
+                    
                     $total += $subtotal;
                 ?>
                     <tr>

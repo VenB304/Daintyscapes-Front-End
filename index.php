@@ -7,13 +7,13 @@ if (session_status() === PHP_SESSION_NONE) {
 if (isset($_SESSION['user_type'])) {
     switch ($_SESSION['user_type']) {
         case 'buyer':
-            header("Location: /daintyscapes/pages/buyer/catalog.php");
+            header("Location: pages/buyer/catalog.php");
             exit();
         case 'seller':
-            header("Location: /daintyscapes/pages/seller/dashboard.php");
+            header("Location: pages/seller/dashboard.php");
             exit();
         case 'admin':
-            header("Location: /daintyscapes/pages/admin/management.php");
+            header("Location: pages/admin/management.php");
             exit();
     }
 }
