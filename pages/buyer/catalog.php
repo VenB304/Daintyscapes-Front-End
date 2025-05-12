@@ -15,6 +15,11 @@ $search = $_GET['search'] ?? '';
 $sort = $_GET['sort'] ?? '';
 $minPrice = $_GET['min_price'] ?? '';
 $maxPrice = $_GET['max_price'] ?? '';
+$categories = [];
+$catResult = $conn->query("SELECT category_id, category_name FROM product_categories ORDER BY category_name ASC");
+while ($row = $catResult->fetch_assoc()) {
+    $categories[] = $row;
+}
 
 $query = "SELECT p.product_id AS id, p.product_name AS name, p.base_price, p.available_quantity, p.image_url AS image
           FROM products p
@@ -57,13 +62,17 @@ $minPriceParam = $minPrice !== '' ? $minPrice : null;
 $maxPriceParam = $maxPrice !== '' ? $maxPrice : null;
 $sortParam = $sort !== '' ? $sort : null;
 
-$stmt = $conn->prepare("CALL get_products(?, ?, ?, ?)");
+$category = $_GET['category'] ?? '';
+$categoryParam = $category !== '' ? intval($category) : null;
+
+$stmt = $conn->prepare("CALL get_products(?, ?, ?, ?, ?)");
 $stmt->bind_param(
-    "sdds",
+    "sddsi",
     $searchParam,
     $minPriceParam,
     $maxPriceParam,
-    $sortParam
+    $sortParam,
+    $categoryParam
 );
 $stmt->execute();
 $result = $stmt->get_result();
@@ -80,6 +89,14 @@ $stmt->close();
 
     <form method="GET" class="catalog-filters">
         <input type="text" name="search" placeholder="Search by name" value="<?= htmlspecialchars($search) ?>">
+        <select name="category">
+            <option value="">All Categories</option>
+            <?php foreach ($categories as $cat): ?>
+                <option value="<?= $cat['category_id'] ?>" <?= (isset($_GET['category']) && $_GET['category'] == $cat['category_id']) ? 'selected' : '' ?>>
+                    <?= htmlspecialchars($cat['category_name']) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
         <input type="number" name="min_price" placeholder="Min Price" value="<?= htmlspecialchars($minPrice) ?>">
         <input type="number" name="max_price" placeholder="Max Price" value="<?= htmlspecialchars($maxPrice) ?>">
         <select name="sort">

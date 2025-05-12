@@ -63,9 +63,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt_update->close();
 
     // Refresh user data
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $stmt_refresh = $conn->prepare("CALL get_buyer_profile_by_username(?)");
+    $stmt_refresh->bind_param("s", $username);
+    $stmt_refresh->execute();
+    $result = $stmt_refresh->get_result();
     $userData = $result->fetch_assoc();
+    $stmt_refresh->close();
+    $conn->next_result();
 
     $updated = true;
 }
