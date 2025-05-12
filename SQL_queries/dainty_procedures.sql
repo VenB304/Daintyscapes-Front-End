@@ -1,5 +1,6 @@
 DELIMITER $$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `add_buyer`(
+
+CREATE PROCEDURE `add_buyer`(
     IN p_first_name VARCHAR(50),
     IN p_last_name VARCHAR(50),
     IN p_username VARCHAR(50),
@@ -31,10 +32,9 @@ BEGIN
 
     COMMIT;
 END$$
-DELIMITER ;
 
-DELIMITER $$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `add_product`(
+
+CREATE PROCEDURE `add_product`(
     IN p_product_category_name TEXT,
     IN p_product_name VARCHAR(100),
     IN p_product_color VARCHAR(50),
@@ -62,10 +62,9 @@ BEGIN
 
     COMMIT;
 END$$
-DELIMITER ;
 
-DELIMITER $$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `add_seller`(
+
+CREATE PROCEDURE `add_seller`(
 	IN p_username VARCHAR(50),
 	IN p_password_hash VARCHAR(100)
 )
@@ -85,32 +84,30 @@ BEGIN
 
 	COMMIT;
 END$$
-DELIMITER ;
 
-DELIMITER $$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `get_buyer_orders`(IN p_username VARCHAR(50))
+
+CREATE PROCEDURE `get_buyer_orders`(IN p_username VARCHAR(50))
 BEGIN
     SELECT 
-        o.order_id,
-        o.order_date AS date,
-        os.status_name AS status,
-        od.product_id,
-        p.product_name AS name,
-        od.order_quantity AS quantity,
-        p.base_price AS price
-    FROM orders o
-    JOIN buyers b ON o.buyer_id = b.buyer_id
-    JOIN users u ON b.user_id = u.user_id
-    JOIN order_details od ON o.order_id = od.order_id
-    JOIN products p ON od.product_id = p.product_id
-    LEFT JOIN order_status os ON o.status_id = os.status_id
-    WHERE u.username = p_username
-    ORDER BY o.order_date DESC, o.order_id DESC;
+        orders.order_id,
+        orders.order_date            AS date,
+        order_status.status_name     AS status,
+        order_details.product_id,
+        products.product_name        AS name,
+        order_details.order_quantity AS quantity,
+        products.base_price          AS price
+    FROM orders
+    JOIN buyers            ON orders.buyer_id = buyers.buyer_id
+    JOIN users             ON buyers.user_id = users.user_id
+    JOIN order_details     ON orders.order_id = order_details.order_id
+    JOIN products          ON order_details.product_id = products.product_id
+    LEFT JOIN order_status ON orders.status_id = order_status.status_id
+    WHERE users.username = p_username
+    ORDER BY orders.order_date DESC, o.order_id DESC;
 END$$
-DELIMITER ;
 
-DELIMITER $$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `get_buyer_profile_by_username`(IN p_username VARCHAR(50))
+
+CREATE PROCEDURE `get_buyer_profile_by_username`(IN p_username VARCHAR(50))
 BEGIN
     SELECT 
         u.username, 
@@ -129,10 +126,9 @@ BEGIN
     WHERE u.username = p_username
     LIMIT 1;
 END$$
-DELIMITER ;
 
-DELIMITER $$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `get_product_by_id`(IN p_product_id INT)
+
+CREATE PROCEDURE `get_product_by_id`(IN p_product_id INT)
 BEGIN
     SELECT 
         p.product_id, 
@@ -147,10 +143,9 @@ BEGIN
     WHERE p.product_id = p_product_id
     LIMIT 1;
 END$$
-DELIMITER ;
 
-DELIMITER $$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `get_products`(
+
+CREATE PROCEDURE `get_products`(
     IN p_search VARCHAR(100),
     IN p_min_price DECIMAL(19,4),
     IN p_max_price DECIMAL(19,4),
@@ -177,10 +172,9 @@ BEGIN
         END ASC,
         p.product_id DESC;
 END$$
-DELIMITER ;
 
-DELIMITER $$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `modify_product`(
+
+CREATE PROCEDURE `modify_product`(
     IN p_product_id INT,
     IN p_product_category_name TEXT,
     IN p_product_name VARCHAR(100),
@@ -214,10 +208,9 @@ BEGIN
 
     COMMIT;
 END$$
-DELIMITER ;
 
-DELIMITER $$
-CREATE DEFINER=`root`@`localhost` PROCEDURE `update_buyer`(
+
+CREATE PROCEDURE `update_buyer`(
     IN p_username VARCHAR(50),
     IN p_first_name VARCHAR(50),
     IN p_last_name VARCHAR(50),
@@ -262,4 +255,5 @@ BEGIN
         VALUES (v_buyer_id, p_country, p_city, p_barangay, p_house_number, p_postal_code);
     END IF;
 END$$
+
 DELIMITER ;
