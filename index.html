@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Constrained Drag and Drop Images</title>
+  <style>
+    body { height: 100vh; margin: 0; display: flex; justify-content: center; align-items: center; }
+    #drag-area {
+      position: relative;
+      width: 600px;
+      height: 400px;
+      border: 3px dashed #0077cc;
+      background: #f8f8f8;
+      overflow: hidden;
+    }
+    .draggable {
+      position: absolute;
+      width: 120px;
+      cursor: grab;
+      user-select: none;
+    }
+    #output {
+      margin-top: 20px;
+      background: #fff;
+      padding: 8px;
+      border: 1px solid #ccc;
+      width: 600px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <div id="drag-area">
+      <img src="\assets\img\ocean.webp" class="draggable" style="left: 50px; top: 50px;">
+      <img src="\assets\img\sunset.webp" class="draggable" style="left: 200px; top: 200px;">
+    </div>
+    <div id="output">Drag an image to see its X and Y position.</div>
+  </div>
+  <script>
+    const dragArea = document.getElementById('drag-area');
+    let dragged = null;
+    let offsetX = 0, offsetY = 0;
+
+    document.querySelectorAll('.draggable').forEach(img => {
+      img.addEventListener('mousedown', function(e) {
+        dragged = img;
+        const imgRect = img.getBoundingClientRect();
+        const areaRect = dragArea.getBoundingClientRect();
+        // Calculate offset relative to the image's top-left corner
+        offsetX = e.clientX - imgRect.left;
+        offsetY = e.clientY - imgRect.top;
+        img.style.zIndex = 1000;
+        e.preventDefault();
+      });
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (dragged) {
+        const areaRect = dragArea.getBoundingClientRect();
+        const imgWidth = dragged.offsetWidth;
+        const imgHeight = dragged.offsetHeight;
+
+        // Calculate new position relative to container
+        let newX = e.clientX - areaRect.left - offsetX;
+        let newY = e.clientY - areaRect.top - offsetY;
+
+        // Constrain within the container
+        newX = Math.max(0, Math.min(newX, dragArea.clientWidth - imgWidth));
+        newY = Math.max(0, Math.min(newY, dragArea.clientHeight - imgHeight));
+
+        dragged.style.left = newX + 'px';
+        dragged.style.top = newY + 'px';
+      }
+    });
+
+    document.addEventListener('mouseup', function(e) {
+      if (dragged) {
+        const x = parseInt(dragged.style.left, 10);
+        const y = parseInt(dragged.style.top, 10);
+        document.getElementById('output').textContent = `X: ${x}, Y: ${y}`;
+        dragged.style.zIndex = '';
+        dragged = null;
+      }
+    });
+  </script>
+</body>
+</html>

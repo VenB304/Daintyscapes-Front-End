@@ -29,7 +29,7 @@ CREATE TABLE addresses(
     barangay VARCHAR(50),
     house_number VARCHAR(20),
     postal_code VARCHAR(10),
-    FOREIGN KEY (buyer_id) REFERENCES buyers (buyer_id)
+    FOREIGN KEY (user_id) REFERENCES buyers (user_id)
 );
 
 CREATE TABLE order_status(
@@ -95,3 +95,7 @@ CREATE TABLE order_details(
     FOREIGN KEY (product_id) REFERENCES products (product_id),
     FOREIGN KEY (customization_id) REFERENCES customizations (customization_id)
 );
+
+
+-- Add UNIQUE constraint to the foreign keys
+-- IMPLEMENT ON DELETE CASCASE
