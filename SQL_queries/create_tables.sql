@@ -23,7 +23,7 @@ CREATE TABLE addresses (
     barangay VARCHAR(50) NOT NULL,
     house_number VARCHAR(20) NOT NULL,
     postal_code VARCHAR(10) NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES buyers (user_id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE order_status (
