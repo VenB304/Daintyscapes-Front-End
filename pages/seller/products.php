@@ -72,7 +72,7 @@ $stmt->close();
                 <td><?= htmlspecialchars($product['color']) ?></td>
                 <td>₱<?= number_format($product['price'], 2) ?></td>
                 <td><?= htmlspecialchars($product['stock']) ?></td>
-                <td>
+                <td id="#actions">
                     <a href="modify_product.php?id=<?= urlencode($product['id']) ?>" class="btn">Modify</a>
                     <a href="customizations.php?product_id=<?= urlencode($product['id']) ?>"><button>Customize</button></a>
                     <form method="POST" action="products.php" style="display:inline;">

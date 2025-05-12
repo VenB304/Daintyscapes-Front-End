@@ -240,13 +240,34 @@ button:hover { background-color: var(--primary-dark); }
 }
 .add-cart:hover { background-color: var(--accent-dark); }
 .remove-btn {
+    display: flex;
     color: white;
     background-color: var(--danger);
     padding: 5px 10px;
     text-decoration: none;
     border-radius: 5px;
+    align-items: center;
+    justify-content: center;
 }
 .remove-btn:hover { background-color: var(--danger-dark); }
+
+.cart-qty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    width: auto;
+    gap: 0.5rem;
+}
+.cart-qty input {
+    width: 4em;
+    text-align: center;
+    margin-right: 0.05rem;
+}
+.cart-qty button {
+    margin: 0;
+}
 
 .product-image-frame {
     width: 500px;
@@ -341,9 +362,12 @@ button:hover { background-color: var(--primary-dark); }
 .dashboard-table th, .dashboard-table td,
 .seller-table th, .seller-table td,
 .sales-table th, .sales-table td {
-    padding: 12px 16px;
-    text-align: left;
+    padding: 0.75em 1em;
     border-bottom: 1px solid #ddd;
+    max-width: 500px;
+    white-space: normal;
+    text-align: left;
+    vertical-align: middle;
 }
 .product-table th, .dashboard-table th, .seller-table th, .sales-table th {
     background-color: var(--table-header-bg);
@@ -378,6 +402,11 @@ button:hover { background-color: var(--primary-dark); }
 .product-table .actions button:hover,
 .seller-table .actions button:hover {
     opacity: 0.9;
+}
+.product-table #actions {
+    display: flex;
+    justify-content: center;
+    text-align: center;
 }
 
 .management-container {
@@ -436,7 +465,7 @@ button:hover { background-color: var(--primary-dark); }
 }
 .buyer-table th, .seller-table th {
     background-color: #f2f2f2;
-    text-align: left;
+    text-align: center;
 }
 .search-bar {
     margin-bottom: 20px;

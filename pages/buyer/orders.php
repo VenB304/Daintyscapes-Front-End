@@ -53,7 +53,7 @@ if ($username) {
             $total = 0;
         ?>
             <div class="order-box">
-                <h3>Order #<?= $order['order_id'] ?> — <?= $order['date'] ?></h3>
+                <h3>Order ID #<?= $order['order_id'] ?> — <?= $order['date'] ?></h3>
                 <table class="product-table" style="width:100%;margin-bottom:1em;">
                     <thead>
                         <tr>

@@ -5,18 +5,18 @@ include('includes/db.php'); // Include the database connection
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Collect user inputs
-    $first_name = trim($_POST['first_name']);
-    $last_name = trim($_POST['last_name']);
-    $username = trim($_POST['username']);
-    $password = trim($_POST['password']);
-    $confirm_password = trim($_POST['confirm_password']);
-    $email = trim($_POST['email']);
-    $phone_number = trim($_POST['phone_number']);
-    $country = trim($_POST['country']);
-    $city = trim($_POST['city']);
-    $barangay = trim($_POST['barangay']);
-    $house_number = trim($_POST['house_number']);
-    $postal_code = trim($_POST['postal_code']);
+    $first_name         = trim($_POST['first_name']);
+    $last_name          = trim($_POST['last_name']);
+    $username           = trim($_POST['username']);
+    $password           = trim($_POST['password']);
+    $confirm_password   = trim($_POST['confirm_password']);
+    $email              = trim($_POST['email']);
+    $phone_number       = trim($_POST['phone_number']);
+    $country            = trim($_POST['country']);
+    $city               = trim($_POST['city']);
+    $barangay           = trim($_POST['barangay']);
+    $house_number       = trim($_POST['house_number']);
+    $postal_code        = trim($_POST['postal_code']);
 
     // Simple validation
     if ($password !== $confirm_password) {

@@ -52,7 +52,7 @@ $total = 0;
     <?php else: ?>
         <table class="seller-table">
             <thead>
-                <tr>
+                <tr class="table-header">
                     <th>Product</th>
                     <th>Image</th>
                     <th>Price</th>
@@ -73,9 +73,9 @@ $total = 0;
                         <td><img src="<?= $product['image'] ?>" alt="<?= $product['name'] ?>" style="max-width: 80px;"></td>
                         <td>₱<?= $product['price'] ?></td>
                         <td>
-                            <form method="POST" action="cart.php">
+                            <form class="cart-qty" method="POST" action="cart.php">
                                 <input type="hidden" name="product_id" value="<?= $productId ?>">
-                                <input type="number" name="quantity" value="<?= $qty ?>" min="1" style="width: 60px;">
+                                <input type="number" name="quantity" value="<?= $qty ?>" min="1">
                                 <button type="submit" name="update_quantity">Update</button>
                             </form>
                         </td>
