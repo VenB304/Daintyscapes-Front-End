@@ -74,7 +74,6 @@ $stmt->close();
                 <td><?= htmlspecialchars($product['stock']) ?></td>
                 <td>
                     <a href="modify_product.php?id=<?= urlencode($product['id']) ?>" class="btn">Modify</a>
-                    <a href="customizations.php?product_id=<?= urlencode($product['id']) ?>"><button>Customize</button></a>
                     <form method="POST" action="products.php" style="display:inline;">
                         <input type="hidden" name="remove_product_id" value="<?= htmlspecialchars($product['id']) ?>">
                         <button type="submit" class="btn" onclick="return confirm('Are you sure you want to remove this product?');">Remove</button>
