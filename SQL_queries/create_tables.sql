@@ -1,97 +1,93 @@
-CREATE TABLE users(
-	user_id INT PRIMARY KEY AUTO_INCREMENT,
-    first_name VARCHAR(50),
-    last_name VARCHAR(50),
-	username VARCHAR(50) UNIQUE NOT NULL,
-	password_hash VARCHAR(100) NOT NULL,
-	role ENUM('buyer', 'seller', 'admin') NOT NULL
+CREATE TABLE users (
+    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password_hash VARCHAR(100) NOT NULL,
+    role ENUM('buyer', 'seller', 'admin') NOT NULL
 );
 
-CREATE TABLE buyers(
-	buyer_id INT PRIMARY KEY AUTO_INCREMENT,
-	user_id INT,
-	email VARCHAR(50) UNIQUE,
-	phone_number VARCHAR(17) UNIQUE,
-    FOREIGN KEY (user_id) REFERENCES users (user_id)
+CREATE TABLE buyers (
+    buyer_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    email VARCHAR(50) UNIQUE NOT NULL,
+    phone_number VARCHAR(17) UNIQUE NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
 );
 
-CREATE TABLE seller(
-	seller_id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT,
-    FOREIGN KEY (user_id) REFERENCES users (user_id)
+CREATE TABLE addresses (
+    address_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    country VARCHAR(50) NOT NULL,
+    city VARCHAR(50) NOT NULL,
+    barangay VARCHAR(50) NOT NULL,
+    house_number VARCHAR(20) NOT NULL,
+    postal_code VARCHAR(10) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES buyers (user_id) ON DELETE CASCADE
 );
 
-CREATE TABLE addresses(
-	address_id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT,
-    country VARCHAR(50),
-    city VARCHAR(50),
-    barangay VARCHAR(50),
-    house_number VARCHAR(20),
-    postal_code VARCHAR(10),
-    FOREIGN KEY (buyer_id) REFERENCES buyers (buyer_id)
+CREATE TABLE order_status (
+    status_id INT PRIMARY KEY AUTO_INCREMENT,
+    status_name VARCHAR(50) NOT NULL
 );
 
-CREATE TABLE order_status(
-	status_id INT PRIMARY KEY AUTO_INCREMENT,
-    status_name TEXT
-);
-
-CREATE TABLE orders(
-	order_id INT PRIMARY KEY AUTO_INCREMENT,
-    buyer_id INT,
-    status_id INT,
-    order_date DATE,
-    FOREIGN KEY (buyer_id) REFERENCES buyers (buyer_id),
+CREATE TABLE orders (
+    order_id INT PRIMARY KEY AUTO_INCREMENT,
+    buyer_id INT NOT NULL,
+    status_id INT NOT NULL,
+    order_date DATE NOT NULL,
+    FOREIGN KEY (buyer_id) REFERENCES buyers (buyer_id) ON DELETE CASCADE,
     FOREIGN KEY (status_id) REFERENCES order_status (status_id)
 );
 
-CREATE TABLE product_categories(
-	category_id INT PRIMARY KEY AUTO_INCREMENT,
-    category_name VARCHAR(50)
+CREATE TABLE product_categories (
+    category_id INT PRIMARY KEY AUTO_INCREMENT,
+    category_name VARCHAR(50) NOT NULL
 );
 
-CREATE TABLE products(
-	product_id INT PRIMARY KEY AUTO_INCREMENT,
-    category_id INT,
-    product_name VARCHAR(100),
+CREATE TABLE products (
+    product_id INT PRIMARY KEY AUTO_INCREMENT,
+    category_id INT NOT NULL,
+    product_name VARCHAR(100) NOT NULL,
     product_color VARCHAR(50),
-    available_quantity INT,
-    base_price DECIMAL(19,4),
-    image_url VARCHAR(1024)
+    available_quantity INT NOT NULL DEFAULT 0,
+    base_price DECIMAL(19,4) NOT NULL,
+    image_url VARCHAR(1024),
+    FOREIGN KEY (category_id) REFERENCES product_categories (category_id)
 );
 
-CREATE TABLE customizations(
-	customization_id INT PRIMARY KEY AUTO_INCREMENT,
-    buyer_id INT,
+CREATE TABLE customizations (
+    customization_id INT PRIMARY KEY AUTO_INCREMENT,
+    buyer_id INT NOT NULL,
     customized_name VARCHAR(20),
     customized_name_color VARCHAR(50),
-    customization_cost DECIMAL(19,4)
+    customization_cost DECIMAL(19,4) NOT NULL,
+    FOREIGN KEY (buyer_id) REFERENCES buyers (buyer_id) ON DELETE CASCADE
 );
 
-CREATE TABLE charms(
-	charm_id INT PRIMARY KEY AUTO_INCREMENT,
-    charm_name VARCHAR(30),
-    charm_base_price DECIMAL(19,4)
+CREATE TABLE charms (
+    charm_id INT PRIMARY KEY AUTO_INCREMENT,
+    charm_name VARCHAR(30) NOT NULL,
+    charm_base_price DECIMAL(19,4) NOT NULL
 );
 
-CREATE TABLE customization_charms(
-	customization_charm_id INT PRIMARY KEY AUTO_INCREMENT,
-    customization_id INT,
-    charm_id INT,
-    x_position INT,
-    y_position INT,
-    FOREIGN KEY (customization_id) REFERENCES customizations (customization_id),
+CREATE TABLE customization_charms (
+    customization_charm_id INT PRIMARY KEY AUTO_INCREMENT,
+    customization_id INT NOT NULL,
+    charm_id INT NOT NULL,
+    x_position INT NOT NULL,
+    y_position INT NOT NULL,
+    FOREIGN KEY (customization_id) REFERENCES customizations (customization_id) ON DELETE CASCADE,
     FOREIGN KEY (charm_id) REFERENCES charms (charm_id)
 );
 
-CREATE TABLE order_details(
-	order_detail_id INT PRIMARY KEY AUTO_INCREMENT,
-    order_id INT,
-    product_id INT,
+CREATE TABLE order_details (
+    order_detail_id INT PRIMARY KEY AUTO_INCREMENT,
+    order_id INT NOT NULL,
+    product_id INT NOT NULL,
     customization_id INT,
-    order_quantity INT,
-    FOREIGN KEY (order_id) REFERENCES orders (order_id),
+    order_quantity INT NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders (order_id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products (product_id),
     FOREIGN KEY (customization_id) REFERENCES customizations (customization_id)
 );
