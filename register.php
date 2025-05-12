@@ -82,18 +82,19 @@ if (isset($_SESSION['role'])) {
     <h1>Register</h1>
 
     <form method="POST" action="register.php">
-        <input type="text" name="first_name" placeholder="First Name" required><br><br>
-        <input type="text" name="last_name" placeholder="Last Name" required><br><br>
-        <input type="text" name="username" placeholder="Username" required><br><br>
-        <input type="password" name="password" placeholder="Password" required><br><br>
-        <input type="password" name="confirm_password" placeholder="Confirm Password" required><br><br>
-        <input type="email" name="email" placeholder="Email" required><br><br>
-        <input type="text" name="phone_number" placeholder="Phone Number" required><br><br>
-        <input type="text" name="country" placeholder="Country" required><br><br>
-        <input type="text" name="city" placeholder="City" required><br><br>
-        <input type="text" name="barangay" placeholder="Barangay" required><br><br>
-        <input type="text" name="house_number" placeholder="House Number" required><br><br>
-        <input type="text" name="postal_code" placeholder="Postal Code" required><br><br>
+        <input type="text"      name="first_name"       placeholder="First Name"       required><br><br>
+        <input type="text"      name="last_name"        placeholder="Last Name"        required><br><br>
+        <input type="text"      name="username"         placeholder="Username"         required><br><br>
+        <input type="password"  name="password"         placeholder="Password"         required><br><br>
+        <input type="password"  name="confirm_password" placeholder="Confirm Password" required><br><br>
+        <input type="email"     name="email"            placeholder="Email"            required><br><br>
+        <input type="text"      name="phone_number"     placeholder="Phone Number"     required><br><br>
+        <input type="text"      name="country"          placeholder="Country"          required><br><br>
+        <input type="text"      name="city"             placeholder="City"             required><br><br>
+        <input type="text"      name="barangay"         placeholder="Barangay"         required><br><br>
+        <input type="text"      name="house_number"     placeholder="House Number"     required><br><br>
+        <input type="text"      name="postal_code"      placeholder="Postal Code"      required><br><br>
+        
         <button type="submit">Register</button>
     </form>
 </div>
