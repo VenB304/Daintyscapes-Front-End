@@ -11,12 +11,14 @@ include_once '../../includes/db.php';
 
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-$stmt = $conn->prepare("SELECT product_id AS id, product_name AS name, base_price AS price, available_quantity AS stock, image_url AS image FROM products WHERE product_id = ?");
+// Use the stored procedure to get product details
+$stmt = $conn->prepare("CALL get_product_by_id(?)");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $result = $stmt->get_result();
 $product = $result->fetch_assoc();
 $stmt->close();
+$conn->next_result(); // Important when using stored procedures with MySQLi
 
 if (!$product) {
     echo "<div class='page-container'><p>Product not found.</p></div>";

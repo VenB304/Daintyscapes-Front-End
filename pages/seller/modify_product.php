@@ -4,23 +4,21 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'seller') {
     header("Location: /daintyscapes/login.php");
     exit;
 }
-include_once($_SERVER['DOCUMENT_ROOT'] . '/daintyscapes/includes/header.php');
-include_once($_SERVER['DOCUMENT_ROOT'] . '/daintyscapes/includes/db.php');
-
+<?php
+include_once($_SERVER['DOCUMENT_ROOT'] . '/daintyscapes/Daintyscapes-Front-End/includes/header.php');
+include_once($_SERVER['DOCUMENT_ROOT'] . '/daintyscapes/Daintyscapes-Front-End/includes/db.php');
 $product = null;
 $success = $error = '';
 
 if (isset($_GET['id'])) {
     $id = intval($_GET['id']);
-    $stmt = $conn->prepare("SELECT p.product_id, pc.category_name, p.product_name, p.product_color, p.available_quantity, p.base_price, p.image_url
-        FROM products p
-        LEFT JOIN product_categories pc ON p.category_id = pc.category_id
-        WHERE p.product_id = ?");
+    $stmt = $conn->prepare("CALL get_product_by_id(?)");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $result = $stmt->get_result();
     $product = $result->fetch_assoc();
     $stmt->close();
+    $conn->next_result(); // Important when using stored procedures with MySQLi
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_id'])) {

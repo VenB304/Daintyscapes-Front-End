@@ -52,10 +52,19 @@ if ($sort === 'price_asc') {
     $query .= " ORDER BY p.product_id DESC";
 }
 
-$stmt = $conn->prepare($query);
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
+$searchParam = $search !== '' ? $search : null;
+$minPriceParam = $minPrice !== '' ? $minPrice : null;
+$maxPriceParam = $maxPrice !== '' ? $maxPrice : null;
+$sortParam = $sort !== '' ? $sort : null;
+
+$stmt = $conn->prepare("CALL get_products(?, ?, ?, ?)");
+$stmt->bind_param(
+    "sdds",
+    $searchParam,
+    $minPriceParam,
+    $maxPriceParam,
+    $sortParam
+);
 $stmt->execute();
 $result = $stmt->get_result();
 

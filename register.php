@@ -5,6 +5,8 @@ include('includes/db.php'); // Include the database connection
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Collect user inputs
+    $first_name = trim($_POST['first_name']);
+    $last_name = trim($_POST['last_name']);
     $username = trim($_POST['username']);
     $password = trim($_POST['password']);
     $confirm_password = trim($_POST['confirm_password']);
@@ -32,10 +34,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Hash the password for security
             $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
-            // Call the stored procedure to add the buyer
-            $statement = $conn->prepare("CALL add_buyer(?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            // Call the stored procedure to add the buyer (now with first and last name)
+            $statement = $conn->prepare("CALL add_buyer(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $statement->bind_param(
-                "sssssssss",
+                "sssssssssss",
+                $first_name,
+                $last_name,
                 $username,
                 $hashed_password,
                 $email,
@@ -78,6 +82,8 @@ if (isset($_SESSION['role'])) {
     <h1>Register</h1>
 
     <form method="POST" action="register.php">
+        <input type="text" name="first_name" placeholder="First Name" required><br><br>
+        <input type="text" name="last_name" placeholder="Last Name" required><br><br>
         <input type="text" name="username" placeholder="Username" required><br><br>
         <input type="password" name="password" placeholder="Password" required><br><br>
         <input type="password" name="confirm_password" placeholder="Confirm Password" required><br><br>

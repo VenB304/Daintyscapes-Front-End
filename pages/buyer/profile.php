@@ -19,26 +19,13 @@ if (!$username) {
 }
 
 // Fetch user, buyer, and address info
-$stmt = $conn->prepare("
-    SELECT 
-        u.username, 
-        b.email, 
-        b.phone_number, 
-        a.country, 
-        a.city, 
-        a.postal_code, 
-        a.barangay, 
-        a.house_number
-    FROM users u
-    JOIN buyers b ON u.user_id = b.user_id
-    LEFT JOIN addresses a ON b.user_id = a.buyer_id
-    WHERE u.username = ?
-    LIMIT 1
-");
+$stmt = $conn->prepare("CALL get_buyer_profile_by_username(?)");
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $result = $stmt->get_result();
 $userData = $result->fetch_assoc();
+$stmt->close();
+$conn->next_result(); // Important when using stored procedures with MySQLi
 
 if (!$userData) {
     echo "<div class='page-container'><p>User data not found.</p></div>";
@@ -47,19 +34,23 @@ if (!$userData) {
 
 // Handle update
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $newFirstName = $_POST['first_name'];
+    $newLastName = $_POST['last_name'];
     $newEmail = $_POST['email'];
     $newPhone = $_POST['phone_number'];
     $newCountry = $_POST['country'];
     $newCity = $_POST['city'];
-    $newPostal = $_POST['postal_code'];
     $newBarangay = $_POST['barangay'];
     $newHouse = $_POST['house_number'];
+    $newPostal = $_POST['postal_code'];
 
-    // Use the update_buyer stored procedure
-    $stmt_update = $conn->prepare("CALL update_buyer(?, ?, ?, ?, ?, ?, ?, ?)");
+    // Use the update_buyer stored procedure with 10 arguments
+    $stmt_update = $conn->prepare("CALL update_buyer(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt_update->bind_param(
-        "ssssssss",
+        "ssssssssss",
         $username,
+        $newFirstName,
+        $newLastName,
         $newEmail,
         $newPhone,
         $newCountry,
@@ -90,6 +81,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <form method="POST" class="auth-form" style="max-width: 500px; margin: auto;">
         <label>Username</label>
         <input type="text" name="username" value="<?= htmlspecialchars($userData['username']) ?>" readonly>
+
+        <label>First Name</label>
+        <input type="text" name="first_name" value="<?= htmlspecialchars($userData['first_name']) ?>" required>
+
+        <label>Last Name</label>
+        <input type="text" name="last_name" value="<?= htmlspecialchars($userData['last_name']) ?>" required>
 
         <label>Email</label>
         <input type="email" name="email" value="<?= htmlspecialchars($userData['email']) ?>" required>

@@ -6,7 +6,7 @@ include_once '../../includes/db.php'; // Include the database connection
 
 // Redirect if not an admin
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header('Location: /daintyscapes/login.php');
+    header('Location: /login.php');
     exit();
 }
 
@@ -77,10 +77,10 @@ $stmt->close();
 <head>
     <meta charset="UTF-8">
     <title>Buyer Management</title>
-    <link rel="stylesheet" href="/daintyscapes/assets/css/styles.css">
+    <link rel="stylesheet" href="/assets/css/styles.css">
 </head>
 <body class="management-container">
-    <?php include($_SERVER['DOCUMENT_ROOT'] . '/daintyscapes/includes/header.php'); ?>
+    <?php include($_SERVER['DOCUMENT_ROOT'] . '/includes/header.php'); ?>
         <h1>Buyer Management</h1>
 
         <!-- Add Buyer Section -->
