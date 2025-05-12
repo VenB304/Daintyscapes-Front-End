@@ -1,7 +1,7 @@
 <?php
-$host = '192.168.50.228'; // Database host
+$host = 'localhost'; // Database host
 $dbname = 'daintyscapes'; // Database name
-$username = ''; // Database username
+$username = 'root'; // Database username
 $password = ''; // Database password (default is empty for XAMPP)
 
 // Create a connection

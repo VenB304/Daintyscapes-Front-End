@@ -35,9 +35,9 @@ if (session_status() === PHP_SESSION_NONE) {
                 <!-- <a href="../seller/analytics.php">Sales and Analytics</a> -->
                 <!-- <a href="../seller/payments.php">Payment Details</a> -->
                 <!-- <a href="../seller/shipping.php">Shipping Information</a> -->
-            <?php elseif ($_SESSION['role'] == 'seller'): ?>
-                <a href="../admin/sellers.php">Dashboard</a>
-                <a href="../admin/buyers.php">Your Products</a>
+            <?php elseif ($_SESSION['role'] == 'admin'): ?>
+                <!-- <a href="../admin/sellers.php">Manage Sellers</a> -->
+                <a href="../admin/buyers.php">Manage Buyers</a>
             
                 <?php endif; ?>
             <a href="/daintyscapes/logout.php">Logout</a>

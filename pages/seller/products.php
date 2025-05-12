@@ -1,30 +1,42 @@
+
 <?php
 session_start();
-if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'seller') {
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'seller') {
     header("Location: /daintyscapes/login.php");
     exit;
 }
 include_once($_SERVER['DOCUMENT_ROOT'] . '/daintyscapes/includes/header.php');
+include_once($_SERVER['DOCUMENT_ROOT'] . '/daintyscapes/includes/db.php');
 
-// Demo product list
-$products = [
-    [
-        'id' => 1,
-        'name' => 'Handmade Vase',
-        'price' => 25.99,
-        'stock' => 12,
-        'description' => 'A beautiful handmade vase.',
-        'image' => '/daintyscapes/assets/img/forest.jfif'
-    ],
-    [
-        'id' => 2,
-        'name' => 'Woven Basket',
-        'price' => 15.50,
-        'stock' => 8,
-        'description' => 'A durable woven basket.',
-        'image' => '/daintyscapes/assets/img/sunset.webp'
-    ],
-];
+// Handle product removal
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['remove_product_id'])) {
+    $remove_id = intval($_POST['remove_product_id']);
+    $stmt = $conn->prepare("DELETE FROM products WHERE product_id = ?");
+    $stmt->bind_param("i", $remove_id);
+    $stmt->execute();
+    $stmt->close();
+}
+
+// Fetch products from the database
+$products = [];
+$stmt = $conn->prepare("
+    SELECT 
+        p.product_id AS id,
+        pc.category_name AS category,
+        p.product_name AS name,
+        p.product_color AS color,
+        p.available_quantity AS stock,
+        p.base_price AS price,
+        p.image_url AS image
+    FROM products p
+    LEFT JOIN product_categories pc ON p.category_id = pc.category_id
+");
+$stmt->execute();
+$result = $stmt->get_result();
+while ($row = $result->fetch_assoc()) {
+    $products[] = $row;
+}
+$stmt->close();
 ?>
 <head>
   <link rel="stylesheet" href="/daintyscapes/assets/css/styles.css"> 
@@ -32,13 +44,15 @@ $products = [
 
 <div class="page-container">
     <h1>Your Products</h1>
-
+    <a href="add_product.php" class="btn">Add Product</a>
     <table class="product-table">
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Image</th>
                 <th>Name</th>
+                <th>Category</th>
+                <th>Color</th>
                 <th>Price</th>
                 <th>Stock</th>
                 <th>Actions</th>
@@ -47,71 +61,27 @@ $products = [
         <tbody>
             <?php foreach ($products as $product): ?>
             <tr>
-                <td><?= $product['id'] ?></td>
-                <td><img src="<?= $product['image'] ?>" alt="<?= $product['name'] ?>" style="width: 60px; height: auto;"></td>
-                <td><?= htmlspecialchars($product['name']) ?></td>
-                <td>₱<?= number_format($product['price'], 2) ?></td>
-                <td><?= $product['stock'] ?></td>
+                <td><?= htmlspecialchars($product['id']) ?></td>
                 <td>
-                    <button onclick="openEditDetails(<?= $product['id'] ?>)">Modify</button>
-                    <button onclick="removeProduct(<?= $product['id'] ?>)">Remove</button>
-                    <a href="customizations.php?product_id=<?= $product['id'] ?>"><button>Customize</button></a>
+                    <?php if (!empty($product['image'])): ?>
+                        <img src="<?= htmlspecialchars($product['image']) ?>" alt="<?= htmlspecialchars($product['name']) ?>" style="width: 60px; height: auto;">
+                    <?php endif; ?>
+                </td>
+                <td><?= htmlspecialchars($product['name']) ?></td>
+                <td><?= htmlspecialchars($product['category']) ?></td>
+                <td><?= htmlspecialchars($product['color']) ?></td>
+                <td>₱<?= number_format($product['price'], 2) ?></td>
+                <td><?= htmlspecialchars($product['stock']) ?></td>
+                <td>
+                    <a href="modify_product.php?id=<?= urlencode($product['id']) ?>" class="btn">Modify</a>
+                    <a href="customizations.php?product_id=<?= urlencode($product['id']) ?>"><button>Customize</button></a>
+                    <form method="POST" action="products.php" style="display:inline;">
+                        <input type="hidden" name="remove_product_id" value="<?= htmlspecialchars($product['id']) ?>">
+                        <button type="submit" class="btn" onclick="return confirm('Are you sure you want to remove this product?');">Remove</button>
+                    </form>
                 </td>
             </tr>
             <?php endforeach; ?>
         </tbody>
     </table>
 </div>
-
-<!-- Edit Product Popup -->
-<div id="edit-details-popup" class="popup hidden">
-    <h3>Edit Product Details</h3>
-    <input type="hidden" id="edit-product-id">
-    <input type="text" id="edit-product-name" placeholder="Product Name">
-    <input type="number" id="edit-product-price" step="0.01" placeholder="Price">
-    <textarea id="edit-product-description" placeholder="Description"></textarea>
-    <button onclick="saveEditDetails()">Save</button>
-    <button onclick="closePopup('edit-details-popup')">Cancel</button>
-</div>
-
-<script>
-const products = <?= json_encode($products) ?>;
-
-function openEditDetails(id) {
-    // Find the product by ID
-    const product = products.find(p => p.id === id);
-
-    if (product) {
-        // Populate the popup fields with the product details
-        document.getElementById('edit-product-id').value = product.id;
-        document.getElementById('edit-product-name').value = product.name;
-        document.getElementById('edit-product-price').value = product.price;
-        document.getElementById('edit-product-description').value = product.description || ''; // Add description if available
-    }
-
-    // Show the popup
-    document.getElementById('edit-details-popup').classList.remove('hidden');
-}
-
-function closePopup(popupId) {
-    document.getElementById(popupId).classList.add('hidden');
-}
-
-function saveEditDetails() {
-    // Get the updated details from the popup
-    const id = document.getElementById('edit-product-id').value;
-    const name = document.getElementById('edit-product-name').value;
-    const price = document.getElementById('edit-product-price').value;
-    const description = document.getElementById('edit-product-description').value;
-
-    // For demo purposes, just show an alert
-    alert(`Product ID ${id} updated with Name: ${name}, Price: ${price}, Description: ${description}`);
-
-    // Close the popup
-    closePopup('edit-details-popup');
-}
-
-function removeProduct(id) {
-    alert("Product ID " + id + " removed (demo only)");
-}
-</script>

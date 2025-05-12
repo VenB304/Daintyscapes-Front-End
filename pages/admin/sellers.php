@@ -1,8 +1,9 @@
+
 <?php
 session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-include_once '../../includes/db.php'; // Include the database connection
+include_once '../../includes/db.php';
 
 // Redirect if not an admin
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
@@ -23,19 +24,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $stmt->store_result();
 
     if ($stmt->num_rows > 0) {
-        header('Location: management.php?error=Username already exists');
+        header('Location: sellers.php?error=Username already exists');
         exit();
     }
 
-    // Call the add_seller stored procedure with 2 arguments
+    // Call the add_seller stored procedure
     $stmt = $conn->prepare("CALL add_seller(?, ?)");
     $stmt->bind_param("ss", $username, $hashedPassword);
 
     if ($stmt->execute()) {
-        header('Location: management.php?success=Seller added successfully');
+        header('Location: sellers.php?success=Seller added successfully');
         exit();
     } else {
-        header('Location: management.php?error=Failed to add seller');
+        header('Location: sellers.php?error=Failed to add seller');
         exit();
     }
 }
@@ -52,10 +53,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $stmt->bind_param("ssi", $username, $hashedPassword, $sellerId);
 
     if ($stmt->execute()) {
-        header('Location: management.php?success=Seller modified successfully');
+        header('Location: sellers.php?success=Seller modified successfully');
         exit();
     } else {
-        header('Location: management.php?error=Failed to modify seller');
+        header('Location: sellers.php?error=Failed to modify seller');
         exit();
     }
 }
@@ -78,52 +79,20 @@ $stmt->close();
     <meta charset="UTF-8">
     <title>Seller Management</title>
     <link rel="stylesheet" href="/daintyscapes/assets/css/styles.css">
-    <style>
-        .management-container {
-            margin: 20px;
-        }
-        .management-section {
-            margin-bottom: 40px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-        }
-        .management-section h2 {
-            margin-bottom: 20px;
-        }
-        .seller-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .seller-table th, .seller-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-        .seller-table th {
-            background-color: #f2f2f2;
-            text-align: left;
-        }
-        .search-bar {
-            margin-bottom: 20px;
-        }
-    </style>
 </head>
-<body class="page-container">
+<body class="management-container">
     <?php include($_SERVER['DOCUMENT_ROOT'] . '/daintyscapes/includes/header.php'); ?>
-
-    <div class="register-container">
         <h1>Seller Management</h1>
 
         <!-- Add Seller Section -->
-        <div class="register-container">
+        <div class="management-container">
             <h2>Add Seller</h2>
             <?php if (isset($_GET['success'])): ?>
                 <p class="success-message"><?php echo htmlspecialchars($_GET['success']); ?></p>
             <?php elseif (isset($_GET['error'])): ?>
                 <p class="error-message"><?php echo htmlspecialchars($_GET['error']); ?></p>
             <?php endif; ?>
-            <form method="POST" action="management.php">
+            <form method="POST" action="sellers.php">
                 <input type="hidden" name="action" value="add">
                 <input type="text" name="username" placeholder="Enter username" required>
                 <input type="password" name="password" placeholder="Enter password" required>
@@ -132,7 +101,7 @@ $stmt->close();
         </div>
 
         <!-- Modify Seller Section -->
-        <div class="register-container">
+        <div class="management-container">
             <h2>Modify Seller</h2>
             <form method="GET" class="search-bar">
                 <input type="text" name="search" placeholder="Search by Seller ID or Username" value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
@@ -158,7 +127,7 @@ $stmt->close();
                             <td><?php echo htmlspecialchars($seller['seller_id']); ?></td>
                             <td><?php echo htmlspecialchars($seller['username']); ?></td>
                             <td>
-                                <form method="POST" action="management.php">
+                                <form method="POST" action="sellers.php">
                                     <input type="hidden" name="action" value="modify">
                                     <input type="hidden" name="seller_id" value="<?php echo htmlspecialchars($seller['seller_id']); ?>">
                                     <input type="text" name="username" placeholder="New username" required>
@@ -171,6 +140,5 @@ $stmt->close();
                 </tbody>
             </table>
         </div>
-    </div>
 </body>
 </html>

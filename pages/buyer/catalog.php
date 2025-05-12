@@ -8,56 +8,62 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'buyer') {
 }
 
 include_once '../../includes/header.php';
+include_once '../../includes/db.php';
 
-// Hardcoded demo products
-$products = [
-    [
-        'id' => 1,
-        'name' => 'Sunset Canvas',
-        'base_price' => 120,
-        'available_quantity' => 15,
-        'image' => '/daintyscapes/assets/img/sunset.webp',
-        'description' => 'A vibrant sunset canvas to brighten up your room.'
-    ],
-    [
-        'id' => 2,
-        'name' => 'Forest Poster',
-        'base_price' => 75,
-        'available_quantity' => 5,
-        'image' => '/daintyscapes/assets/img/forest.jfif',
-        'description' => 'A calming forest poster with deep greens.'
-    ],
-    [
-        'id' => 3,
-        'name' => 'Ocean Art Print',
-        'base_price' => 90,
-        'available_quantity' => 0,
-        'image' => '/daintyscapes/assets/img/ocean.webp',
-        'description' => 'Soothing ocean waves captured in print.'
-    ]
-];
-
-// Search/filter/sort handlers
+// Fetch products from the database
 $search = $_GET['search'] ?? '';
 $sort = $_GET['sort'] ?? '';
 $minPrice = $_GET['min_price'] ?? '';
 $maxPrice = $_GET['max_price'] ?? '';
 
-$filteredProducts = array_filter($products, function ($product) use ($search, $minPrice, $maxPrice) {
-    $matchesName = stripos($product['name'], $search) !== false;
-    $matchesPrice = true;
+$query = "SELECT p.product_id AS id, p.product_name AS name, p.base_price, p.available_quantity, p.image_url AS image
+          FROM products p
+          WHERE 1";
+$params = [];
+$types = "";
 
-    if ($minPrice !== '' && $product['base_price'] < $minPrice) $matchesPrice = false;
-    if ($maxPrice !== '' && $product['base_price'] > $maxPrice) $matchesPrice = false;
-
-    return $matchesName && $matchesPrice;
-});
-
-if ($sort === 'price_asc') {
-    usort($filteredProducts, fn($a, $b) => $a['base_price'] <=> $b['base_price']);
-} elseif ($sort === 'price_desc') {
-    usort($filteredProducts, fn($a, $b) => $b['base_price'] <=> $a['base_price']);
+// Search by name
+if ($search !== '') {
+    $query .= " AND p.product_name LIKE ?";
+    $params[] = "%$search%";
+    $types .= "s";
 }
+
+// Filter by price
+if ($minPrice !== '') {
+    $query .= " AND p.base_price >= ?";
+    $params[] = $minPrice;
+    $types .= "d";
+}
+if ($maxPrice !== '') {
+    $query .= " AND p.base_price <= ?";
+    $params[] = $maxPrice;
+    $types .= "d";
+}
+
+// Sorting
+if ($sort === 'price_asc') {
+    $query .= " ORDER BY p.base_price ASC";
+} elseif ($sort === 'price_desc') {
+    $query .= " ORDER BY p.base_price DESC";
+} elseif ($sort === 'oldest') {
+    $query .= " ORDER BY p.product_id ASC";
+} else {
+    $query .= " ORDER BY p.product_id DESC";
+}
+
+$stmt = $conn->prepare($query);
+if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+}
+$stmt->execute();
+$result = $stmt->get_result();
+
+$products = [];
+while ($row = $result->fetch_assoc()) {
+    $products[] = $row;
+}
+$stmt->close();
 ?>
 
 <div class="page-container">
@@ -68,7 +74,8 @@ if ($sort === 'price_asc') {
         <input type="number" name="min_price" placeholder="Min Price" value="<?= htmlspecialchars($minPrice) ?>">
         <input type="number" name="max_price" placeholder="Max Price" value="<?= htmlspecialchars($maxPrice) ?>">
         <select name="sort">
-            <option value="">Default</option>
+            <option value="">Newest to Oldest</option>
+            <option value="oldest" <?= $sort === 'oldest' ? 'selected' : '' ?>>Oldest to Newest</option>
             <option value="price_asc" <?= $sort === 'price_asc' ? 'selected' : '' ?>>Price: Low to High</option>
             <option value="price_desc" <?= $sort === 'price_desc' ? 'selected' : '' ?>>Price: High to Low</option>
         </select>
@@ -76,19 +83,33 @@ if ($sort === 'price_asc') {
     </form>
 
     <div class="product-grid">
-        <?php foreach ($filteredProducts as $product): ?>
+        <?php foreach ($products as $product): ?>
             <div class="product-card">
                 <a href="product.php?id=<?= $product['id'] ?>">
-                    <img src="<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+                    <img src="<?= htmlspecialchars($product['image']) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
                     <h3><?= htmlspecialchars($product['name']) ?></h3>
-                    <p>Price: ₱<?= $product['base_price'] ?></p>
-                    <p>Stock: <?= $product['available_quantity'] ?></p>
+                    <p>Price: ₱<?= number_format($product['base_price'], 2) ?></p>
+                    <p>Stock: <?= htmlspecialchars($product['available_quantity']) ?></p>
                 </a>
             </div>
         <?php endforeach; ?>
 
-        <?php if (empty($filteredProducts)): ?>
+        <?php if (empty($products)): ?>
             <p>No products found.</p>
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+const form = document.querySelector('.catalog-filters');
+form.querySelectorAll('select, input[type="number"]').forEach(el => {
+    el.addEventListener('change', () => form.submit());
+});
+const searchInput = form.querySelector('input[type="text"]');
+if (searchInput) {
+    searchInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') form.submit();
+    });
+    searchInput.addEventListener('blur', () => form.submit());
+}
+</script>

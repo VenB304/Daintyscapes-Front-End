@@ -1,55 +1,34 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'buyer') {
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'buyer') {
     header('Location: /daintyscapes/login.php');
     exit();
 }
 
 include_once '../../includes/header.php';
+include_once '../../includes/db.php';
 
-$products = [
-    1 => [
-        'id' => 1,
-        'name' => 'Sunset Canvas',
-        'price' => 120,
-        'stock' => 15,
-        'image' => '/daintyscapes/assets/img/sunset.webp',
-        'description' => 'A vibrant sunset canvas to brighten up your room.'
-    ],
-    2 => [
-        'id' => 2,
-        'name' => 'Forest Poster',
-        'price' => 75,
-        'stock' => 5,
-        'image' => '/daintyscapes/assets/img/forest.jfif',
-        'description' => 'A calming forest poster with deep greens.'
-    ],
-    3 => [
-        'id' => 3,
-        'name' => 'Ocean Art Print',
-        'price' => 90,
-        'stock' => 0,
-        'image' => '/daintyscapes/assets/img/ocean.webp',
-        'description' => 'Soothing ocean waves captured in print.'
-    ]
-];
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
-$id = $_GET['id'] ?? null;
+$stmt = $conn->prepare("SELECT product_id AS id, product_name AS name, base_price AS price, available_quantity AS stock, image_url AS image FROM products WHERE product_id = ?");
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$result = $stmt->get_result();
+$product = $result->fetch_assoc();
+$stmt->close();
 
-if (!$id || !isset($products[$id])) {
+if (!$product) {
     echo "<div class='page-container'><p>Product not found.</p></div>";
     exit();
 }
-
-$product = $products[$id];
 ?>
 
 <div class="page-container">
     <div class="product-detail-container">
         <!-- Product Image -->
-        <div class="product-image">
-            <img src="<?= $product['image'] ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+        <div class="product-image-frame">
+            <img src="<?= htmlspecialchars($product['image']) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
         </div>
 
         <!-- Product Information -->
@@ -57,10 +36,11 @@ $product = $products[$id];
             <h1 class="product-title"><?= htmlspecialchars($product['name']) ?></h1>
             <p class="product-price">₱<?= number_format($product['price'], 2) ?></p>
             <p class="product-stock"><?= $product['stock'] > 0 ? "In Stock: {$product['stock']}" : "Out of Stock" ?></p>
-            <p class="product-description"><?= htmlspecialchars($product['description']) ?></p>
+            <!-- If you have a description column, add it here -->
+            <!-- <p class="product-description"><?= htmlspecialchars($product['description'] ?? '') ?></p> -->
 
             <?php if ($product['stock'] > 0): ?>
-                <!-- Customization Options -->
+                <!-- Customization Options (static for now, or fetch from DB if you have a customizations table) -->
                 <div class="customization-options">
                     <label for="color">Choose a color:</label>
                     <select name="customization[color]" id="color" required>

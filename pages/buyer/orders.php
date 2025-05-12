@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'buyer') {
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'buyer') {
     header('Location: /daintyscapes/login.php');
     exit();
 }

@@ -4,8 +4,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (isset($_SESSION['user_type'])) {
-    switch ($_SESSION['user_type']) {
+if (isset($_SESSION['role'])) {
+    switch ($_SESSION['role']) {
         case 'buyer':
             header("Location: pages/buyer/catalog.php");
             exit();
@@ -13,7 +13,7 @@ if (isset($_SESSION['user_type'])) {
             header("Location: pages/seller/dashboard.php");
             exit();
         case 'admin':
-            header("Location: pages/admin/management.php");
+            header("Location: pages/admin/buyers.php");
             exit();
     }
 }
@@ -22,7 +22,7 @@ if (isset($_SESSION['user_type'])) {
 
 <div class="landing-container">
     <h1>Welcome to Daintyscapes</h1>
-    <p>Your one-stop platform for buying and selling beautiful products!</p>
+    <p>Discover our unique range of handcrafted products.</p>
 
     <div class="cta-buttons">
         <a href="login.php" class="btn">Login</a>

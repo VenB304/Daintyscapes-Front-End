@@ -2,7 +2,7 @@
 session_start();
 
 // Redirect if not a seller
-if (!isset($_SESSION['user_type']) || $_SESSION['user_type'] !== 'seller') {
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'seller') {
     header("Location: /daintyscapes/index.php");
     exit();
 }

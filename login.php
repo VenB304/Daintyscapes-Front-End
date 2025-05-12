@@ -12,7 +12,7 @@ if (isset($_SESSION['role'])) {
             header("Location: /daintyscapes/pages/seller/dashboard.php");
             exit();
         case 'admin':
-            header("Location: /daintyscapes/pages/admin/management.php");
+            header("Location: /daintyscapes/pages/admin/sellers.php");
             exit();
     }
 }
@@ -47,7 +47,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     header("Location: /daintyscapes/pages/seller/dashboard.php");
                     exit();
                 case 'admin':
-                    header("Location: /daintyscapes/pages/admin/management.php");
+                    header("Location: /daintyscapes/pages/admin/buyers.php");
                     exit();
             }
         } else {
@@ -67,8 +67,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <?php if (isset($error)) echo "<p class='error-message'>$error</p>"; ?>
 
     <form method="POST" action="login.php">
-        <input type="text" name="username" placeholder="Username" required><br>
-        <input type="password" name="password" placeholder="Password" required><br>
+        <input type="text" name="username" placeholder="Username" required><br><br>
+        <input type="password" name="password" placeholder="Password" required><br><br>
         <button type="submit">Login</button>
     </form>
 </div>

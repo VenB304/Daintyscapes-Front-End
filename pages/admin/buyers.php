@@ -78,45 +78,13 @@ $stmt->close();
     <meta charset="UTF-8">
     <title>Buyer Management</title>
     <link rel="stylesheet" href="/daintyscapes/assets/css/styles.css">
-    <style>
-        .management-container {
-            margin: 20px;
-        }
-        .management-section {
-            margin-bottom: 40px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-        }
-        .management-section h2 {
-            margin-bottom: 20px;
-        }
-        .buyer-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .buyer-table th, .buyer-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-        .buyer-table th {
-            background-color: #f2f2f2;
-            text-align: left;
-        }
-        .search-bar {
-            margin-bottom: 20px;
-        }
-    </style>
 </head>
-<body class="page-container">
+<body class="management-container">
     <?php include($_SERVER['DOCUMENT_ROOT'] . '/daintyscapes/includes/header.php'); ?>
-
-    <div class="register-container">
         <h1>Buyer Management</h1>
 
         <!-- Add Buyer Section -->
-        <div class="register-container">
+        <div class="management-container">
             <h2>Add Buyer</h2>
             <?php if (isset($_GET['success'])): ?>
                 <p class="success-message"><?php echo htmlspecialchars($_GET['success']); ?></p>
@@ -132,7 +100,7 @@ $stmt->close();
         </div>
 
         <!-- Modify Buyer Section -->
-        <div class="register-container">
+        <div class="management-container">
             <h2>Modify Buyer</h2>
             <form method="GET" class="search-bar">
                 <input type="text" name="search" placeholder="Search by Buyer ID or Username" value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
@@ -171,6 +139,5 @@ $stmt->close();
                 </tbody>
             </table>
         </div>
-    </div>
 </body>
 </html>
