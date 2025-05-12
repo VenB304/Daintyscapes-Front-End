@@ -33,6 +33,7 @@ if ($username) {
         $orders[$oid]['items'][] = [
             'product_id' => $row['product_id'],
             'name' => $row['name'],
+            'image' => $row['image'], // Make sure this is selected in your procedure!
             'quantity' => $row['quantity'],
             'price' => $row['price']
         ];
@@ -53,20 +54,35 @@ if ($username) {
         ?>
             <div class="order-box">
                 <h3>Order #<?= $order['order_id'] ?> — <?= $order['date'] ?></h3>
-                <ul>
-                    <?php foreach ($order['items'] as $item): 
-                        $subtotal = $item['price'] * $item['quantity'];
-                        $total += $subtotal;
-                    ?>
-                        <li>
-                            <?= htmlspecialchars($item['quantity']) ?>× <?= htmlspecialchars($item['name']) ?>
-                            (₱<?= number_format($item['price'], 2) ?> each) — 
-                            ₱<?= number_format($subtotal, 2) ?>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-                <p><strong>Total:</strong> ₱<?= number_format($total, 2) ?></p>
-                <p><strong>Status:</strong> <?= htmlspecialchars($order['status']) ?></p>
+                <table class="product-table" style="width:100%;margin-bottom:1em;">
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Product Name</th>
+                            <th>Quantity</th>
+                            <th>Price Each</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($order['items'] as $item): 
+                            $subtotal = $item['price'] * $item['quantity'];
+                            $total += $subtotal;
+                        ?>
+                            <tr>
+                                <td>
+                                    <img src="<?= htmlspecialchars($item['image']) ?>" alt="<?= htmlspecialchars($item['name']) ?>" style="width:60px;height:60px;object-fit:cover;">
+                                </td>
+                                <td><?= htmlspecialchars($item['name']) ?></td>
+                                <td><?= htmlspecialchars($item['quantity']) ?></td>
+                                <td>₱<?= number_format($item['price'], 2) ?></td>
+                                <td>₱<?= number_format($subtotal, 2) ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+                <h1><strong>Total:</strong> ₱<?= number_format($total, 2) ?></h1>
+                <h1><strong>Status:</strong> <?= htmlspecialchars($order['status']) ?></h1>
             </div>
         <?php endforeach; ?>
     <?php endif; ?>
