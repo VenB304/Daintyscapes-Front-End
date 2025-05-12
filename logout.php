@@ -5,6 +5,6 @@ session_start();
 session_destroy();
 
 // Redirect to the landing page (or login page)
-header("Location: /index.php");
+header("Location: ./index.php");
 exit();
 ?>
