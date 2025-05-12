@@ -5,8 +5,8 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'seller') {
     header("Location: /daintyscapes/login.php");
     exit;
 }
-include_once($_SERVER['DOCUMENT_ROOT'] . '/daintyscapes/includes/header.php');
-include_once($_SERVER['DOCUMENT_ROOT'] . '/daintyscapes/includes/db.php');
+include_once("../../includes/header.php");
+include_once("../../includes/db.php");
 
 $success = $error = '';
 

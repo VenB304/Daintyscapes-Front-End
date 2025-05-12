@@ -7,22 +7,66 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'buyer') {
 }
 
 include_once '../../includes/header.php';
-
-$products = [
-    1 => ['id' => 1, 'name' => 'Sunset Canvas', 'price' => 120],
-    2 => ['id' => 2, 'name' => 'Forest Poster', 'price' => 75],
-    3 => ['id' => 3, 'name' => 'Ocean Art Print', 'price' => 90]
-];
+include_once '../../includes/db.php';
 
 $cart = isset($_COOKIE['cart']) ? json_decode($_COOKIE['cart'], true) : [];
+$products = [];
 
+if (!empty($cart)) {
+    $ids = implode(',', array_map('intval', array_keys($cart)));
+    $sql = "SELECT product_id AS id, product_name AS name, base_price AS price, image_url AS image FROM products WHERE product_id IN ($ids)";
+    $result = $conn->query($sql);
+    while ($row = $result->fetch_assoc()) {
+        $products[$row['id']] = $row;
+    }
+}
 $total = 0;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm'])) {
-    // Simulate checkout (normally insert to orders table here)
-    setcookie('cart', '', time() - 3600, '/'); // Clear cart
-    $cart = [];
-    $confirmed = true;
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty($cart)) {
+    // Get buyer_id from session/username
+    $username = $_SESSION['username'];
+    $stmt = $conn->prepare("SELECT b.buyer_id FROM buyers b JOIN users u ON b.user_id = u.user_id WHERE u.username = ?");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $stmt->bind_result($buyer_id);
+    $stmt->fetch();
+    $stmt->close();
+
+    if ($buyer_id) {
+        // Get status_id for "Processing"
+        $status_id = null;
+        $stmt = $conn->prepare("SELECT status_id FROM order_status WHERE status_name = 'Processing' LIMIT 1");
+        $stmt->execute();
+        $stmt->bind_result($status_id);
+        $stmt->fetch();
+        $stmt->close();
+
+        if (!$status_id) {
+            // If not found, insert it
+            $conn->query("INSERT INTO order_status (status_name) VALUES ('Processing')");
+            $status_id = $conn->insert_id;
+        }
+
+        // Insert order with status_id
+        $stmt = $conn->prepare("INSERT INTO orders (buyer_id, status_id, order_date) VALUES (?, ?, NOW())");
+        $stmt->bind_param("ii", $buyer_id, $status_id);
+        $stmt->execute();
+        $order_id = $stmt->insert_id;
+        $stmt->close();
+
+        // Insert order details
+        $stmt = $conn->prepare("INSERT INTO order_details (order_id, product_id, order_quantity) VALUES (?, ?, ?)");
+        foreach ($cart as $productId => $qty) {
+            $stmt->bind_param("iii", $order_id, $productId, $qty);
+            $stmt->execute();
+        }
+        $stmt->close();
+
+        // Clear cart
+        setcookie('cart', '', time() - 3600, '/');
+        $cart = [];
+        $confirmed = true;
+    }
 }
 ?>
 

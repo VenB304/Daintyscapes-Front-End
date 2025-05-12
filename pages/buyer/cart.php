@@ -7,15 +7,19 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'buyer') {
 }
 
 include_once '../../includes/header.php';
-
-$products = [
-    1 => ['id' => 1, 'name' => 'Sunset Canvas', 'price' => 120, 'image' => '/daintyscapes/assets/images/sunset.jpg'],
-    2 => ['id' => 2, 'name' => 'Forest Poster', 'price' => 75, 'image' => '/daintyscapes/assets/images/forest.jpg'],
-    3 => ['id' => 3, 'name' => 'Ocean Art Print', 'price' => 90, 'image' => '/daintyscapes/assets/images/ocean.jpg']
-];
+include_once '../../includes/db.php';
 
 $cart = isset($_COOKIE['cart']) ? json_decode($_COOKIE['cart'], true) : [];
+$products = [];
 
+if (!empty($cart)) {
+    $ids = implode(',', array_map('intval', array_keys($cart)));
+    $sql = "SELECT product_id AS id, product_name AS name, base_price AS price, image_url AS image FROM products WHERE product_id IN ($ids)";
+    $result = $conn->query($sql);
+    while ($row = $result->fetch_assoc()) {
+        $products[$row['id']] = $row;
+    }
+}
 // Update quantity
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_quantity'])) {
     $id = $_POST['product_id'];

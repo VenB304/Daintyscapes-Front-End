@@ -7,27 +7,39 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'buyer') {
 }
 
 include_once '../../includes/header.php';
+include_once '../../includes/db.php';
 
-// Placeholder for future database-loaded orders
-$orders = [
-    [
-        'order_id' => 1001,
-        'date' => '2025-04-25',
-        'items' => [
-            ['product_id' => 1, 'name' => 'Sunset Canvas', 'quantity' => 1, 'price' => 120],
-            ['product_id' => 2, 'name' => 'Forest Poster', 'quantity' => 2, 'price' => 75],
-        ],
-        'status' => 'Shipped'
-    ],
-    [
-        'order_id' => 1002,
-        'date' => '2025-04-27',
-        'items' => [
-            ['product_id' => 3, 'name' => 'Ocean Art Print', 'quantity' => 1, 'price' => 90],
-        ],
-        'status' => 'Processing'
-    ]
-];
+$username = $_SESSION['username'] ?? null;
+$orders = [];
+
+if ($username) {
+    // Call the stored procedure to get orders for this buyer
+    $stmt = $conn->prepare("CALL get_buyer_orders(?)");
+    $stmt->bind_param("s", $username);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    // Group items by order_id
+    while ($row = $result->fetch_assoc()) {
+        $oid = $row['order_id'];
+        if (!isset($orders[$oid])) {
+            $orders[$oid] = [
+                'order_id' => $oid,
+                'date' => $row['date'],
+                'status' => $row['status'],
+                'items' => []
+            ];
+        }
+        $orders[$oid]['items'][] = [
+            'product_id' => $row['product_id'],
+            'name' => $row['name'],
+            'quantity' => $row['quantity'],
+            'price' => $row['price']
+        ];
+    }
+    $stmt->close();
+    $conn->next_result();
+}
 ?>
 
 <div class="page-container">
@@ -59,4 +71,3 @@ $orders = [
         <?php endforeach; ?>
     <?php endif; ?>
 </div>
-

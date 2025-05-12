@@ -4,9 +4,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'seller') {
     header("Location: /daintyscapes/login.php");
     exit;
 }
-<?php
-include_once($_SERVER['DOCUMENT_ROOT'] . '/daintyscapes/Daintyscapes-Front-End/includes/header.php');
-include_once($_SERVER['DOCUMENT_ROOT'] . '/daintyscapes/Daintyscapes-Front-End/includes/db.php');
+
+include_once("../../includes/header.php");
+include_once("../../includes/db.php");
 $product = null;
 $success = $error = '';
 

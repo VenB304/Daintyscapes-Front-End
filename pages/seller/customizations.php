@@ -4,7 +4,8 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'seller') {
     header("Location: /daintyscapes/login.php");
     exit;
 }
-include_once($_SERVER['DOCUMENT_ROOT'] . '/daintyscapes/includes/header.php');
+include_once("../../includes/header.php");
+include_once("../../includes/db.php");
 
 $product_id = $_GET['product_id'] ?? 1; // Default for demo
 
