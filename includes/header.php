@@ -45,7 +45,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
             <?php endswitch; ?>
 
-            <a href="/daintyscapes/logout.php">Logout</a>
+            <a href="../../logout.php">Logout</a>
 
         <?php else: ?>
             <a href="/index.php">Home</a>

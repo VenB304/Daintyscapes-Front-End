@@ -6,13 +6,13 @@ include_once 'includes/db.php'; // Include the database connection
 if (isset($_SESSION['role'])) {
     switch ($_SESSION['role']) {
         case 'buyer':
-            header("Location: /daintyscapes/pages/buyer/catalog.php");
+            header("Location: /pages/buyer/catalog.php");
             exit();
         case 'seller':
-            header("Location: /daintyscapes/pages/seller/dashboard.php");
+            header("Location: /pages/seller/dashboard.php");
             exit();
         case 'admin':
-            header("Location: /daintyscapes/pages/admin/sellers.php");
+            header("Location: /pages/admin/sellers.php");
             exit();
     }
 }
@@ -41,13 +41,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Redirect based on user role
             switch ($user['role']) {
                 case 'buyer':
-                    header("Location: /daintyscapes/pages/buyer/catalog.php");
+                    header("Location: /pages/buyer/catalog.php");
                     exit();
                 case 'seller':
-                    header("Location: /daintyscapes/pages/seller/dashboard.php");
+                    header("Location: /pages/seller/dashboard.php");
                     exit();
                 case 'admin':
-                    header("Location: /daintyscapes/pages/admin/buyers.php");
+                    header("Location: /pages/admin/buyers.php");
                     exit();
             }
         } else {
