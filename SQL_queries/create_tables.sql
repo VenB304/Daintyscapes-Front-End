@@ -23,7 +23,7 @@ CREATE TABLE seller(
 
 CREATE TABLE addresses(
 	address_id INT PRIMARY KEY AUTO_INCREMENT,
-    buyer_id INT,
+    user_id INT,
     country VARCHAR(50),
     city VARCHAR(50),
     barangay VARCHAR(50),
