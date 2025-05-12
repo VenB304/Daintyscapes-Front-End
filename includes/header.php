@@ -10,7 +10,7 @@ if (session_status() === PHP_SESSION_NONE) {
 <head>
     <meta charset="UTF-8">
     <title>Daintyscapes</title>
-    <link rel="stylesheet" href="/daintyscapes/assets/css/styles.css">
+    <link rel="stylesheet" href="/assets/css/styles.css">
 </head>
 <body>
 
@@ -21,31 +21,37 @@ if (session_status() === PHP_SESSION_NONE) {
 
     <nav class="nav-links">
         <?php if (isset($_SESSION['role'])): ?>
-            <?php if ($_SESSION['role'] == 'buyer'): ?>
-                <a href="../buyer/catalog.php">Catalog</a>
-                <a href="../buyer/cart.php">Cart</a>
-                <a href="../buyer/orders.php">Orders</a>
-                <a href="../buyer/profile.php">Profile</a>
             
-            
-            <?php elseif ($_SESSION['role'] == 'seller'): ?>
-                <a href="../seller/dashboard.php">Dashboard</a>
-                <a href="../seller/products.php">Your Products</a>
-                <a href="../seller/orders.php">Orders</a>
-                <!-- <a href="../seller/analytics.php">Sales and Analytics</a> -->
-                <!-- <a href="../seller/payments.php">Payment Details</a> -->
-                <!-- <a href="../seller/shipping.php">Shipping Information</a> -->
-            <?php elseif ($_SESSION['role'] == 'admin'): ?>
-                <!-- <a href="../admin/sellers.php">Manage Sellers</a> -->
-                <a href="../admin/buyers.php">Manage Buyers</a>
-            
-                <?php endif; ?>
+            <?php switch ($_SESSION['role']): 
+                case 'buyer': ?>
+                    <a href="../buyer/catalog.php">Catalog</a>
+                    <a href="../buyer/cart.php">Cart</a>
+                    <a href="../buyer/orders.php">Orders</a>
+                    <a href="../buyer/profile.php">Profile</a>
+                    <?php break; ?>
+                
+                <?php case 'seller': ?>
+                    <a href="../seller/dashboard.php">Dashboard</a>
+                    <a href="../seller/products.php">Your Products</a>
+                    <a href="../seller/orders.php">Orders</a>
+                    <?php break; ?>
+                
+                <?php case 'admin': ?>
+                    <a href="../admin/buyers.php">Manage Buyers</a>
+                    <?php break; ?>
+                
+                <?php default: ?>
+                    <!-- Handle unexpected roles if needed -->
+
+            <?php endswitch; ?>
+
             <a href="/daintyscapes/logout.php">Logout</a>
-            <?php else: ?>
-                <a href="/daintyscapes/index.php">Home</a>
-                <a href="/daintyscapes/login.php">Login</a>
-                <a href="/daintyscapes/register.php">Register</a>
-            <?php endif; ?>
+
+        <?php else: ?>
+            <a href="/index.php">Home</a>
+            <a href="/login.php">Login</a>
+            <a href="/register.php">Register</a>
+        <?php endif; ?>
     </nav>
 </header>
 </body>
