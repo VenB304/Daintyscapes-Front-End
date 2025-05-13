@@ -352,15 +352,21 @@ SELECT
     cc.y_position,
     cust.customized_name AS engraving_name,
     cust.customized_name_color AS engraving_color
-    FROM orders o
-    JOIN order_status s ON o.status_id = s.status_id
-    JOIN order_details od ON o.order_id = od.order_id
-    JOIN products p ON od.product_id = p.product_id
-    LEFT JOIN customizations cust ON od.customization_id = cust.customization_id
-    LEFT JOIN customization_charms cc ON cust.customization_id = cc.customization_id
-    LEFT JOIN charms c ON cc.charm_id = c.charm_id
-    WHERE o.buyer_id = (SELECT buyer_id FROM buyers WHERE username = p_username)
-    ORDER BY o.order_date DESC, o.order_id DESC;
+FROM orders o
+JOIN order_status s ON o.status_id = s.status_id
+JOIN order_details od ON o.order_id = od.order_id
+JOIN products p ON od.product_id = p.product_id
+LEFT JOIN customizations cust ON od.customization_id = cust.customization_id
+LEFT JOIN customization_charms cc ON cust.customization_id = cc.customization_id
+LEFT JOIN charms c ON cc.charm_id = c.charm_id
+WHERE o.buyer_id = (
+    SELECT buyer_id
+    FROM buyers
+    JOIN users ON buyers.user_id = users.user_id
+    WHERE users.username = p_username
+    LIMIT 1
+)
+ORDER BY o.order_date DESC, o.order_id DESC;
 END$$
 
 -- ----------------------------------------------------------
