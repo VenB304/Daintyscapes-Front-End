@@ -346,6 +346,24 @@ BEGIN
 END$$
 
 -- ----------------------------------------------------------
+
+CREATE PROCEDURE get_seller_products()
+BEGIN
+    SELECT 
+        p.product_id, 
+        p.product_name, 
+        c.category_name,
+        p.available_quantity, 
+        p.base_price,
+        GROUP_CONCAT(pv.variant_name SEPARATOR ', ') AS colors
+    FROM products p
+    LEFT JOIN product_categories c ON p.category_id = c.category_id
+    LEFT JOIN product_variants pv ON p.product_id = pv.product_id
+    GROUP BY p.product_id
+    ORDER BY p.product_id DESC;
+END$$
+
+-- ----------------------------------------------------------
 -- ----------------------------------------------------------
 -- ----------------------------------------------------------
 
@@ -444,6 +462,18 @@ BEGIN
 
 	COMMIT;
 END $$
+
+-- ----------------------------------------------------------
+
+CREATE PROCEDURE remove_product(IN p_product_id INT)
+BEGIN
+    START TRANSACTION;
+        DELETE FROM order_details WHERE product_id = p_product_id;
+        DELETE FROM products WHERE product_id = p_product_id;
+        DELETE FROM product_categories 
+            WHERE category_id NOT IN (SELECT DISTINCT category_id FROM products);
+    COMMIT;
+END$$
 
 -- ----------------------------------------------------------
 
