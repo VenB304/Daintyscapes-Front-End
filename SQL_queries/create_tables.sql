@@ -65,7 +65,7 @@ CREATE TABLE product_variants (
 CREATE TABLE customizations (
     customization_id INT PRIMARY KEY AUTO_INCREMENT,
     buyer_id INT NOT NULL,
-    customized_name VARCHAR(20),
+    customized_name VARCHAR(9),
     customized_name_color VARCHAR(50),
     customization_cost DECIMAL(19,4) NOT NULL,
     FOREIGN KEY (buyer_id) REFERENCES buyers (buyer_id) ON DELETE CASCADE

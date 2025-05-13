@@ -23,7 +23,7 @@ if (isset($_GET['id'])) {
 
     $colors = [];
     if ($product) {
-        $stmt = $conn->prepare("SELECT color_id, color_name, image_url FROM product_colors WHERE product_id = ?");
+        $stmt = $conn->prepare("SELECT variant_id, variant_name, image_url FROM product_variants WHERE product_id = ?");
         $stmt->bind_param("i", $product['product_id']);
         $stmt->execute();
         $res = $stmt->get_result();
@@ -39,20 +39,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_id'])) {
     $category = trim($_POST['category']);
     $name = trim($_POST['name']);
     // Remove all old colors for this product
-    $stmt = $conn->prepare("DELETE FROM product_colors WHERE product_id = ?");
+    $stmt = $conn->prepare("CALL remove_product_variant(?)");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $stmt->close();
 
     // Insert all current colors
     if (!empty($_POST['colors']) && !empty($_POST['color_images'])) {
-        $color_stmt = $conn->prepare("INSERT INTO product_colors (product_id, color_name, image_url) VALUES (?, ?, ?)");
+        $color_stmt = $conn->prepare("CALL add_product_variant(?, ?, ?)");
         foreach ($_POST['colors'] as $i => $color) {
-            $color_name = trim($color);
+            $variant_name = trim($color);
             $color_image = trim($_POST['color_images'][$i]);
-            if ($color_name !== '' && $color_image !== '') {
-                $color_stmt->bind_param("iss", $id, $color_name, $color_image);
+            if ($variant_name !== '' && $color_image !== '') {
+                $color_stmt->bind_param("iss", $id, $variant_name, $color_image);
                 $color_stmt->execute();
+                // Clear any remaining results to avoid "commands out of sync"
+                while ($conn->more_results() && $conn->next_result()) { $conn->store_result(); }
             }
         }
         $color_stmt->close();
@@ -62,8 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_id'])) {
 
     // Call the procedure to update the product
     $dummy_color = '';
-    $stmt = $conn->prepare("CALL modify_product(?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("isssii", $id, $category, $name, $dummy_color, $quantity, $price);
+    $stmt = $conn->prepare("CALL modify_product(?, ?, ?, ?, ?)");
+    $stmt->bind_param("issid", $id, $category, $name, $quantity, $price);
     if ($stmt->execute()) {
         $success = "Product updated successfully!";
     } else {
@@ -93,8 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_id'])) {
             <label>Colors & Images</label>
             <?php foreach ($colors as $i => $c): ?>
                 <div class="color-row">
-                    <input type="hidden" name="color_ids[]" value="<?= $c['color_id'] ?>">
-                    <input type="text" name="colors[]" placeholder="Color Name" value="<?= htmlspecialchars($c['color_name']) ?>" required>
+                    <input type="hidden" name="color_ids[]" value="<?= $c['variant_id'] ?>">
+                    <input type="text" name="colors[]" placeholder="Color Name" value="<?= htmlspecialchars($c['variant_name']) ?>" required>
                     <input type="text" name="color_images[]" placeholder="Image URL" value="<?= htmlspecialchars($c['image_url']) ?>" required>
                     <button type="button" onclick="this.parentNode.remove()">-</button>
                 </div>

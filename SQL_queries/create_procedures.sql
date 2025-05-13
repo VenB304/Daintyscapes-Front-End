@@ -490,6 +490,15 @@ END$$
 
 -- ----------------------------------------------------------
 
+CREATE PROCEDURE remove_product_variant(
+    IN p_product_id INT
+)
+BEGIN
+    DELETE FROM product_variants WHERE product_id = p_product_id;
+END$$
+
+-- ----------------------------------------------------------
+
 CREATE PROCEDURE delete_buyer(
 	IN p_buyer_id INT
 )
