@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 13, 2025 at 04:19 PM
+-- Generation Time: May 13, 2025 at 04:45 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -111,7 +111,8 @@ SELECT
     od.color_name,
     (SELECT image_url FROM product_colors WHERE product_id = p.product_id AND color_name = od.color_name LIMIT 1) AS image,
     od.order_quantity AS quantity,
-    p.base_price AS price
+    od.base_price_at_order,
+    od.total_price_at_order
 FROM orders o
 JOIN order_details od ON o.order_id = od.order_id
 JOIN products p ON od.product_id = p.product_id
@@ -339,7 +340,8 @@ INSERT INTO `orders` (`order_id`, `buyer_id`, `status_id`, `order_date`) VALUES
 (1, 1, 8, '2025-05-13'),
 (2, 1, 5, '2025-05-13'),
 (3, 1, 2, '2025-05-13'),
-(4, 1, 2, '2025-05-13');
+(4, 1, 2, '2025-05-13'),
+(5, 1, 3, '2025-05-13');
 
 -- --------------------------------------------------------
 
@@ -353,21 +355,19 @@ CREATE TABLE `order_details` (
   `product_id` int(11) DEFAULT NULL,
   `color_name` varchar(50) DEFAULT NULL,
   `customization_id` int(11) DEFAULT NULL,
-  `order_quantity` int(11) DEFAULT NULL
+  `order_quantity` int(11) DEFAULT NULL,
+  `base_price_at_order` decimal(19,4) DEFAULT NULL,
+  `total_price_at_order` decimal(19,4) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `order_details`
 --
 
-INSERT INTO `order_details` (`order_detail_id`, `order_id`, `product_id`, `color_name`, `customization_id`, `order_quantity`) VALUES
-(4, 2, 2, 'Zombie Hamburglar', NULL, 1),
-(5, 2, 2, 'Birdie Wings', NULL, 1),
-(6, 2, 2, 'Soda Potion', NULL, 1),
-(7, 3, 2, 'Zombie Hamburglar', NULL, 5),
-(8, 3, 2, 'Birdie Wings', NULL, 5),
-(9, 3, 2, 'Soda Potion', NULL, 10),
-(10, 4, 2, 'Zombie Hamburglar', NULL, 103);
+INSERT INTO `order_details` (`order_detail_id`, `order_id`, `product_id`, `color_name`, `customization_id`, `order_quantity`, `base_price_at_order`, `total_price_at_order`) VALUES
+(11, 5, 2, 'Zombie Hamburglar', NULL, 1, 500.0000, 500.0000),
+(12, 5, 2, 'Birdie Wings', NULL, 1, 500.0000, 500.0000),
+(13, 5, 2, 'Soda Potion', NULL, 1, 500.0000, 500.0000);
 
 -- --------------------------------------------------------
 
@@ -413,7 +413,7 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`product_id`, `category_id`, `product_name`, `available_quantity`, `base_price`) VALUES
-(2, 1, 'Mcdo Minecraft Toys', 100, 500.0000);
+(2, 1, 'Mcdo Minecraft Toys', 97, 500.0000);
 
 -- --------------------------------------------------------
 
@@ -493,8 +493,8 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`user_id`, `first_name`, `last_name`, `username`, `password_hash`, `role`) VALUES
-(5, NULL, NULL, 'admin', '$2y$10$gCiV6UrePI5nqBhPOEqGGOUqzcvYowJ.K06ENsS3IkboVlrMv8NqG', 'admin'),
-(7, NULL, NULL, 'seller1', '$2y$10$1ZIoLMFC1LbwlYJeTiT.7.U8.xp2HYF33ZOF3HDZMmVizjG5MVAZy', 'seller'),
+(5, NULL, NULL, 'admin', '$2y$10$yjU5L4Wm4byXZJMJVa7ojOfnWvDlm4vhA6cTdzNubthydxzwe8m.q', 'admin'),
+(7, NULL, NULL, 'seller', '$2y$10$FSwK2fX2sPWTwsluoMQ3wegb9dPy5lXda8Wlm3HPR3F2qcDx3dlI6', 'seller'),
 (8, 'Karl Zyrele', 'Palomo', 'buyer', '$2y$10$20gHDBA3wXSuG.FqYplnYurO39wM7xzdTkKhl2tcnJkI0/4SOoMVW', 'buyer');
 
 --
@@ -631,13 +631,13 @@ ALTER TABLE `customization_charms`
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `order_details`
 --
 ALTER TABLE `order_details`
-  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `order_status`
