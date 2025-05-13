@@ -180,21 +180,14 @@ if ($register_error) {
         <form method="POST" action="index.php">
             <input type="hidden" name="form_type" value="register">
             <div class="first-last-name">
-                <input type="text" name="first_name" placeholder="First Name" required
-                    value="<?= htmlspecialchars($_POST['first_name'] ?? '') ?>">
-                <input type="text" name="last_name" placeholder="Last Name" required
-                    value="<?= htmlspecialchars($_POST['last_name'] ?? '') ?>">
+                <input type="text" name="first_name" placeholder="First Name" required value="<?= htmlspecialchars($_POST['first_name'] ?? '') ?>">
+                <input type="text" name="last_name" placeholder="Last Name" required value="<?= htmlspecialchars($_POST['last_name'] ?? '') ?>">
             </div>
-            <input type="text" name="username" placeholder="Username" required pattern="^[a-zA-Z0-9_-]{4,16}$"
-                title="4-16 characters: letters, numbers, underscores (_) or hyphens (-). No spaces."
-                value="<?= htmlspecialchars($_POST['username'] ?? '') ?>" class="<?= $err_username ?>">
+            <input type="text" name="username" placeholder="Username" required pattern="^[a-zA-Z0-9_-]{4,16}$" title="4-16 characters: letters, numbers, underscores (_) or hyphens (-). No spaces." value="<?= htmlspecialchars($_POST['username'] ?? '') ?>" class="<?= $err_username ?>">
             <input type="password"  name="password"         placeholder="Password"         required>
             <input type="password"  name="confirm_password" placeholder="Confirm Password" required>
-            <input type="email"     name="email"            placeholder="email@example.com" required
-                value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" class="<?= $err_email ?>">
-            <input type="tel" name="phone_number" placeholder="+1234567890" required pattern="^\+[1-9][0-9]{9,14}$"
-                title="Enter a valid international phone number with + and country code"
-                value="<?= htmlspecialchars($_POST['phone_number'] ?? '') ?>" class="<?= $err_phone ?>">
+            <input type="email"     name="email"            placeholder="email@example.com" required value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" class="<?= $err_email ?>">
+            <input type="tel" name="phone_number" placeholder="+1234567890" required pattern="^\+[1-9][0-9]{9,14}$" title="Enter a valid international phone number with + and country code" value="<?= htmlspecialchars($_POST['phone_number'] ?? '') ?>" class="<?= $err_phone ?>">
             <input type="text"      name="country"          placeholder="Country"          required value="<?= htmlspecialchars($_POST['country'] ?? '') ?>">
             <input type="text"      name="city"             placeholder="City"             required value="<?= htmlspecialchars($_POST['city'] ?? '') ?>">
             <input type="text"      name="barangay"         placeholder="Barangay"         required value="<?= htmlspecialchars($_POST['barangay'] ?? '') ?>">

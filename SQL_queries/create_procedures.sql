@@ -343,7 +343,6 @@ CREATE PROCEDURE get_buyer_orders(
     IN p_username VARCHAR(50)
 )
 BEGIN
-<<<<<<< HEAD
     SELECT 
         o.order_id,
         o.order_date AS date,
@@ -367,41 +366,8 @@ BEGIN
         LEFT JOIN customizations cust ON od.customization_id = cust.customization_id
         LEFT JOIN customization_charms cc ON cust.customization_id = cc.customization_id
         LEFT JOIN charms c ON cc.charm_id = c.charm_id
-        WHERE o.buyer_id = (SELECT buyer_id FROM buyers WHERE username = p_username)
+        WHERE o.buyer_id = (SELECT buyer_id FROM buyers b WHERE b.user_id = (SELECT user_id FROM users u WHERE u.username = p_username))
         ORDER BY o.order_date DESC, o.order_id DESC;
-=======
-SELECT 
-    o.order_id,
-    o.order_date AS date,
-    s.status_name AS status,
-    od.product_id,
-    p.product_name AS name,
-    od.variant_name,
-    od.variant_url AS image,
-    od.order_quantity AS quantity,
-    od.base_price_at_order,
-    od.total_price_at_order,
-    c.charm_name,
-    cc.x_position,
-    cc.y_position,
-    cust.customized_name AS engraving_name,
-    cust.customized_name_color AS engraving_color
-FROM orders o
-JOIN order_status s ON o.status_id = s.status_id
-JOIN order_details od ON o.order_id = od.order_id
-JOIN products p ON od.product_id = p.product_id
-LEFT JOIN customizations cust ON od.customization_id = cust.customization_id
-LEFT JOIN customization_charms cc ON cust.customization_id = cc.customization_id
-LEFT JOIN charms c ON cc.charm_id = c.charm_id
-WHERE o.buyer_id = (
-    SELECT buyer_id
-    FROM buyers
-    JOIN users ON buyers.user_id = users.user_id
-    WHERE users.username = p_username
-    LIMIT 1
-)
-ORDER BY o.order_date DESC, o.order_id DESC;
->>>>>>> c96e6380f871b2c884fe0ba2f2bee8940852ec40
 END$$
 
 -- ----------------------------------------------------------
