@@ -49,12 +49,18 @@ CREATE TABLE products (
     product_id INT PRIMARY KEY AUTO_INCREMENT,
     category_id INT NOT NULL,
     product_name VARCHAR(100) NOT NULL,
-    product_color VARCHAR(50),
     available_quantity INT NOT NULL DEFAULT 0,
     base_price DECIMAL(19,4) NOT NULL,
-    image_url VARCHAR(1024),
     FOREIGN KEY (category_id) REFERENCES product_categories (category_id)
 );
+
+CREATE TABLE product_variants (
+  variant_id INT NOT NULL,
+  product_id INT NOT NULL,
+  variant_name VARCHAR(50) NOT NULL,
+  image_url VARCHAR(255) NOT NULL
+  FOREIGN KEY (product_id) REFERENCES products (product_id) ON DELETE CASCADE
+)
 
 CREATE TABLE customizations (
     customization_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -85,9 +91,13 @@ CREATE TABLE order_details (
     order_detail_id INT PRIMARY KEY AUTO_INCREMENT,
     order_id INT NOT NULL,
     product_id INT NOT NULL,
-    customization_id INT,
+    customization_id INT NOT NULL,
     order_quantity INT NOT NULL,
+    base_price_at_order DECIMAL(19,4) NOT NULL,
+    total_price_at_order DECIMAL(19,4) NOT NULL
     FOREIGN KEY (order_id) REFERENCES orders (order_id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products (product_id),
     FOREIGN KEY (customization_id) REFERENCES customizations (customization_id)
 );
+
+-- TABLES THAT HAVE CHANGED PRODUCTS, PRODUCT_VARIANTS, ORDER_DETAILS

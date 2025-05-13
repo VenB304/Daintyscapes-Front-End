@@ -33,27 +33,6 @@ END$$
 
 -- ----------------------------------------------------------
 
-CREATE PROCEDURE add_seller(
-	IN p_username VARCHAR(50),
-	IN p_password_hash VARCHAR(100)
-)
-BEGIN
-	START TRANSACTION;
-
-		INSERT INTO users (username, password_hash, role)
-		VALUES (p_username, p_password_hash, 'seller');
-
-		-- Get the last inserted ID
-		SET @uid = LAST_INSERT_ID();
-
-		INSERT INTO seller (user_id)
-		VALUES (@uid);
-
-	COMMIT;
-END $$
-
--- ----------------------------------------------------------
-
 CREATE PROCEDURE add_product_category(
 	IN p_product_category_name VARCHAR(50)
 )
@@ -72,7 +51,6 @@ CREATE PROCEDURE add_product(
     IN p_product_color VARCHAR(50),
     IN p_available_quantity INT,
     IN p_base_price DECIMAL(19,4),
-    IN p_image_url VARCHAR(255)
 )
 BEGIN
     DECLARE fk_category_id INT;
@@ -84,13 +62,12 @@ BEGIN
         LIMIT 1;
 
         IF fk_category_id IS NULL THEN
-            -- Optionally, insert the category if it doesn't exist
             INSERT INTO product_categories (category_name) VALUES (p_product_category_name);
             SET fk_category_id = LAST_INSERT_ID();
         END IF;
 
-        INSERT INTO products (category_id, product_name, product_color, available_quantity, base_price, image_url)
-        VALUES (fk_category_id, p_product_name, p_product_color, p_available_quantity, p_base_price, p_image_url);
+        INSERT INTO products (category_id, product_name, product_color, available_quantity, base_price)
+        VALUES (fk_category_id, p_product_name, p_product_color, p_available_quantity, p_base_price);
 
     COMMIT;
 END$$
@@ -106,6 +83,7 @@ CREATE PROCEDURE add_order(
 )
 BEGIN
 	DECLARE product_quantity INT;
+    DECLARE v_order_id INT;
     
     START TRANSACTION;
 		
@@ -121,9 +99,11 @@ BEGIN
 		ELSE
 			INSERT INTO orders (buyer_id, status_id, order_date)
             VALUES (p_buyer_id, p_status_id, CURDATE());
+
+            SET v_order_id = LAST_INSERT_ID();
             
             INSERT INTO order_details (order_id, product_id, customization_id, order_quantity)
-            VALUES (LAST_INSERT_ID(), p_product_id, p_customization_id, p_order_quantity); 
+            VALUES (v_order_id, p_product_id, p_customization_id, p_order_quantity); 
             
             UPDATE products
             SET available_quantity = available_quantity - p_order_quantity
@@ -145,23 +125,6 @@ BEGIN
     COMMIT;
 END $$
 
--- ----------------------------------------------------------
--- ----------------------------------------------------------
--- ----------------------------------------------------------
-
-CREATE PROCEDURE add_order_status()
-BEGIN
-	START TRANSACTION;
-		INSERT INTO order_status (status_id, status_name) 
-		VALUES	(1, 'Pending'),
-				(2, 'Shipped'),
-				(3, 'Delivered'),
-				(4, 'Cancelled');
-	COMMIT;
-END $$
-	
--- ----------------------------------------------------------
--- ----------------------------------------------------------
 -- ----------------------------------------------------------
 
 CREATE PROCEDURE update_buyer(
@@ -212,7 +175,6 @@ CREATE PROCEDURE modify_product(
     IN p_product_color VARCHAR(50),
     IN p_available_quantity INT,
     IN p_base_price DECIMAL(19,4),
-    IN p_image_url VARCHAR(255)
 )
 BEGIN
     DECLARE fk_category_id INT;
@@ -231,10 +193,8 @@ BEGIN
         UPDATE products
         SET category_id = fk_category_id,
             product_name = p_product_name,
-            product_color = p_product_color,
             available_quantity = p_available_quantity,
             base_price = p_base_price,
-            image_url = p_image_url
         WHERE product_id = p_product_id;
     COMMIT;
 END$$
@@ -256,7 +216,9 @@ BEGIN
         p.product_name AS name,
         p.base_price,
         p.available_quantity,
-        p.image_url AS image
+        (SELECT image_url FROM product_colors 
+         WHERE product_id = p.product_id 
+         ORDER BY color_id ASC LIMIT 1) AS image
     FROM products p
     WHERE
         (p_search IS NULL OR p.product_name LIKE CONCAT('%', p_search, '%'))
@@ -283,10 +245,8 @@ BEGIN
         p.product_id, 
         pc.category_name, 
         p.product_name, 
-        p.product_color, 
         p.available_quantity, 
-        p.base_price, 
-        p.image_url
+        p.base_price,
     FROM products p
     LEFT JOIN product_categories pc ON p.category_id = pc.category_id
     WHERE p.product_id = p_product_id
@@ -334,13 +294,76 @@ BEGIN
 		od.order_quantity AS quantity,
 		p.base_price AS price
 	FROM orders o
-	JOIN buyers b ON o.buyer_id = b.buyer_id
-	JOIN users u ON b.user_id = u.user_id
-	JOIN order_details od ON o.order_id = od.order_id
-	JOIN products p ON od.product_id = p.product_id
-	LEFT JOIN order_status os ON o.status_id = os.status_id
+	JOIN buyers b 			  ON o.buyer_id 	= b.buyer_id
+	JOIN users u 			  ON b.user_id 		= u.user_id
+	JOIN order_details od 	  ON o.order_id 	= od.order_id
+	JOIN products p 		  ON od.product_id 	= p.product_id
+	LEFT JOIN order_status os ON o.status_id 	= os.status_id
 	WHERE u.username = p_username
 	ORDER BY o.order_date DESC, o.order_id DESC;
+END$$
+
+-- ----------------------------------------------------------
+
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `modify_product` (IN `p_product_id` INT, IN `p_product_category_name` TEXT, IN `p_product_name` VARCHAR(100), IN `p_product_color` VARCHAR(50), IN `p_available_quantity` INT, IN `p_base_price` DECIMAL(19,4))   BEGIN
+    DECLARE fk_category_id INT;
+
+    START TRANSACTION;
+        SELECT category_id INTO fk_category_id
+        FROM product_categories 
+        WHERE category_name = p_product_category_name
+        LIMIT 1;
+
+        IF fk_category_id IS NULL THEN
+            INSERT INTO product_categories (category_name) VALUES (p_product_category_name);
+            SET fk_category_id = LAST_INSERT_ID();
+        END IF;
+
+        UPDATE products
+        SET category_id = fk_category_id,
+            product_name = p_product_name,
+            available_quantity = p_available_quantity,
+            base_price = p_base_price
+        WHERE product_id = p_product_id;
+
+    COMMIT;
+END$$
+
+-- ----------------------------------------------------------
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `update_buyer` (IN `p_username` VARCHAR(50), IN `p_first_name` VARCHAR(50), IN `p_last_name` VARCHAR(50), IN `p_email` VARCHAR(50), IN `p_phone_number` VARCHAR(17), IN `p_country` VARCHAR(50), IN `p_city` VARCHAR(50), IN `p_barangay` VARCHAR(50), IN `p_house_number` VARCHAR(20), IN `p_postal_code` VARCHAR(10))   BEGIN
+    DECLARE v_user_id INT;
+    DECLARE v_buyer_id INT;
+
+    -- Get user_id
+    SELECT user_id INTO v_user_id FROM users WHERE username = p_username;
+    -- Get buyer_id
+    SELECT buyer_id INTO v_buyer_id FROM buyers WHERE user_id = v_user_id;
+
+    -- Update users table
+    UPDATE users
+    SET first_name = p_first_name, last_name = p_last_name
+    WHERE user_id = v_user_id;
+
+    -- Update buyers table
+    UPDATE buyers
+    SET email = p_email, phone_number = p_phone_number
+    WHERE buyer_id = v_buyer_id;
+
+    -- Update addresses table (if exists, else insert)
+    IF EXISTS (SELECT 1 FROM addresses WHERE buyer_id = v_buyer_id) THEN
+        UPDATE addresses
+        SET country = p_country,
+            city = p_city,
+            barangay = p_barangay,
+            house_number = p_house_number,
+            postal_code = p_postal_code
+        WHERE buyer_id = v_buyer_id;
+    ELSE
+        INSERT INTO addresses (buyer_id, country, city, barangay, house_number, postal_code)
+        VALUES (v_buyer_id, p_country, p_city, p_barangay, p_house_number, p_postal_code);
+    END IF;
 END$$
 
 -- ----------------------------------------------------------
@@ -425,6 +448,27 @@ END $$
 
 -- ----------------------------------------------------------
 
+CREATE PROCEDURE debug_add_seller_with_hash(
+	IN p_username VARCHAR(50),
+	IN p_password_hash VARCHAR(100)
+)
+BEGIN
+	START TRANSACTION;
+
+		INSERT INTO users (username, password_hash, role)
+		VALUES (p_username, p_password_hash, 'seller');
+
+		-- Get the last inserted ID
+		SET @uid = LAST_INSERT_ID();
+
+		INSERT INTO seller (user_id)
+		VALUES (@uid);
+
+	COMMIT;
+END $$
+
+-- ----------------------------------------------------------
+
 CREATE PROCEDURE delete_buyer(
 	IN p_buyer_id INT
 )
@@ -433,12 +477,31 @@ BEGIN
 
 	START TRANSACTION;
 		SELECT user_id INTO v_user_id FROM buyers WHERE buyer_id = p_buyer_id;
-        DELETE FROM buyers WHERE buyers.buyer_id = p_buyer_id;
         DELETE FROM addresses WHERE addresses.user_id = v_user_id;
+        DELETE FROM buyers WHERE buyers.buyer_id = p_buyer_id;
         DELETE FROM users WHERE users.user_id = v_user_id;
     COMMIT;
 END $$
 
+-- ----------------------------------------------------------
+
+-- ----------------------------------------------------------
+-- ----------------------------------------------------------
+-- ----------------------------------------------------------
+
+CREATE PROCEDURE initialize_add_order_status()
+BEGIN
+	START TRANSACTION;
+		INSERT INTO order_status (status_id, status_name) 
+		VALUES	(1, 'Pending'),
+				(2, 'Shipped'),
+				(3, 'Delivered'),
+				(4, 'Cancelled');
+	COMMIT;
+END $$
+	
+-- ----------------------------------------------------------
+-- ----------------------------------------------------------
 -- ----------------------------------------------------------
 
 DELIMITER ;
