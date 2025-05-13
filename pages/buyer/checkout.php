@@ -84,11 +84,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty(
         $stmt->bind_result($status_id);
         $stmt->fetch();
         $stmt->close();
-
+        
         if (!$status_id) {
-            // If not found, insert it
-            $conn->query("INSERT INTO order_status (status_name) VALUES ('Processing')");
-            $status_id = $conn->insert_id;
+            // Handle error: status not found
+            echo "<p>Error: Order status not found.</p>";
+            exit();
         }
 
         // Insert order with status_id
