@@ -2,7 +2,7 @@
 $host = 'localhost'; // Database host
 $dbname = 'daintyscapes'; // Database name
 $username = 'root'; // Database username
-$password = ''; // Database password (default is empty for XAMPP)
+$password = 'root'; // Database password (default is empty for XAMPP)
 
 // Create a connection
 $conn = new mysqli($host, $username, $password, $dbname);

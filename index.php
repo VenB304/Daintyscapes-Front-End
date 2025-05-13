@@ -47,13 +47,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION['role'] = $user['role'];
                 switch ($user['role']) {
                     case 'buyer':
-                        header("Location: /pages/buyer/catalog.php");
+                        header("Location: ../daintyscapes/pages/buyer/catalog.php");
                         exit();
                     case 'seller':
-                        header("Location: /pages/seller/dashboard.php");
+                        header("Location: ../daintyscapes/pages/seller/products.php");
                         exit();
                     case 'admin':
-                        header("Location: /pages/admin/buyers.php");
+                        header("Location: ../daintyscapes/pages/admin/buyers.php");
                         exit();
                 }
             } else {
@@ -122,11 +122,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 
-<div class="index-container">
-    
 <head>
     <link rel="stylesheet" href="../../daintyscapes/assets/css/styles.css">
 </head>
+
+<div class="index-container">
 
     <div class="landing-container">
         <h1>Welcome to Daintyscapes</h1>
