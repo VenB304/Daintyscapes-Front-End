@@ -18,6 +18,9 @@ $cart = isset($_COOKIE[$cart_cookie]) ? json_decode($_COOKIE[$cart_cookie], true
 $products = [];
 $colors = [];
 
+$charm_prices = [];
+$charm_names = [];
+
 // Fetch product and color info for all cart items
 if (!empty($cart)) {
     $productIds = [];
@@ -43,6 +46,20 @@ if (!empty($cart)) {
         $colors[$row['product_id'] . '|' . $row['color_name']] = $row;
     }
     $color_stmt->close();
+    }
+}
+
+foreach ($cart as $key => $qty) {
+    $parts = explode('|', $key);
+    $charm = $parts[2] ?? '';
+    if ($charm) $charm_names[$charm] = true;
+}
+if (!empty($charm_names)) {
+    $in = "'" . implode("','", array_map([$conn, 'real_escape_string'], array_keys($charm_names))) . "'";
+    $sql = "SELECT charm_name, charm_base_price FROM charms WHERE charm_name IN ($in)";
+    $result = $conn->query($sql);
+    while ($row = $result->fetch_assoc()) {
+        $charm_prices[$row['charm_name']] = (float)$row['charm_base_price'];
     }
 }
 
@@ -134,7 +151,11 @@ $total = 0;
                     if (!$product || !$color) continue;
                     $img = $color['image_url'] ?: '/daintyscapes/assets/img/default-product.png';
                     $maxStock = $product['available_quantity'];
-                    $subtotal = $product['base_price'] * $qty;
+                    $charm_cost = 0;
+                    if ($charm && isset($charm_prices[$charm])) {
+                        $charm_cost = $charm_prices[$charm];
+                    }
+                    $subtotal = ($product['base_price'] + $charm_cost) * $qty;
                     $total += $subtotal;
                 ?>
                     <tr>
@@ -157,6 +178,9 @@ $total = 0;
                         <td colspan="7" style="background:#fafafa;">
                             <?php if ($charm): ?>
                                 <strong>Charm:</strong> <?= htmlspecialchars($charm) ?> (Position: X <?= (int)$charm_x ?>, Y <?= (int)$charm_y ?>)
+                                <?php if (isset($charm_prices[$charm])): ?>
+                                    <span style="color:#888;">(+₱<?= number_format($charm_prices[$charm], 2) ?> per item)</span>
+                                <?php endif; ?>
                                 <br>
                             <?php endif; ?>
                             <?php if ($engraving_option === 'include'): ?>

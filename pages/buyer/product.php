@@ -41,6 +41,18 @@ $charm_stmt = $conn->query("SELECT charm_name, charm_image_url FROM charms");
 while ($row = $charm_stmt->fetch_assoc()) {
     $charm_images[$row['charm_name']] = $row['charm_image_url'];
 }
+
+$charms = [];
+$charm_stmt = $conn->query("SELECT charm_name, charm_image_url, charm_base_price FROM charms");
+while ($row = $charm_stmt->fetch_assoc()) {
+    $charms[$row['charm_name']] = [
+        'img' => $row['charm_image_url'],
+        'price' => $row['charm_base_price']
+    ];
+}
+
+
+
 ?>
 
 <head>
@@ -50,11 +62,14 @@ while ($row = $charm_stmt->fetch_assoc()) {
 <div class="product-detail-container">
     <div class="product-image-frame">
         <img id="product-image" src="<?= htmlspecialchars($colors[0]['image_url'] ?? '') ?>" alt="Product Image">
-        <img id="charm-overlay" src="" alt="Charm Overlay" style="display:none;position:absolute;left:0;top:0;width:150px;height:150px;pointer-events:auto;cursor:move;">
+        <img id="charm-overlay" src="" alt="Charm Overlay" style="display:none;position:absolute;left:0;top:0;width:225px;height:225px;pointer-events:auto;cursor:move;">
     </div>
     <div class="product-info">
         <h1 class="product-title"><?= htmlspecialchars($product['name']) ?></h1>
-        <p class="product-price">₱<?= number_format($product['price'], 2) ?></p>
+        <p class="product-price">
+            ₱<span id="base-price"><?= number_format($product['price'], 2) ?></span>
+            <span id="charm-extra"></span>
+        </p>
         <p class="product-stock">
             <?php
             $firstStock = (int)($product['stock'] ?? 0);
@@ -79,8 +94,15 @@ while ($row = $charm_stmt->fetch_assoc()) {
             <label for="charm" style="min-width:110px;">Choose a charm:</label>
             <select name="charm" id="charm" required>
                 <option value="">No Charm</option>
-                <?php foreach ($charm_images as $charm => $img): ?>
-                    <option value="<?= htmlspecialchars($charm) ?>" data-img="<?= htmlspecialchars($img) ?>"><?= htmlspecialchars($charm) ?></option>
+                <?php foreach ($charms as $charm => $data): ?>
+                    <option value="<?= htmlspecialchars($charm) ?>"
+                            data-img="<?= htmlspecialchars($data['img']) ?>"
+                            data-price="<?= htmlspecialchars($data['price']) ?>">
+                        <?= htmlspecialchars($charm) ?>
+                        <?php if ($data['price'] > 0): ?>
+                            (+₱<?= number_format($data['price'], 2) ?>)
+                        <?php endif; ?>
+                    </option>
                 <?php endforeach; ?>
             </select>
         </div>
@@ -246,6 +268,21 @@ document.getElementById('engraving-color').addEventListener('change', function()
 window.addEventListener('DOMContentLoaded', function() {
     var color = document.getElementById('engraving-color').value;
     document.getElementById('hidden-engraving-color').value = color;
+});
+
+document.getElementById('charm').addEventListener('change', function() {
+    var price = parseFloat(document.getElementById('base-price').textContent.replace(/,/g, ''));
+    var extra = 0;
+    var selected = this.selectedOptions[0];
+    if (selected && selected.value) {
+        extra = parseFloat(selected.getAttribute('data-price')) || 0;
+    }
+    var charmExtra = document.getElementById('charm-extra');
+    if (extra > 0) {
+        charmExtra.textContent = ' + ₱' + extra.toFixed(2) + ' (charm)';
+    } else {
+        charmExtra.textContent = '';
+    }
 });
 
 </script>

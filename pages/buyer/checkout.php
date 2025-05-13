@@ -17,15 +17,14 @@ $cart = isset($_COOKIE[$cart_cookie]) ? json_decode($_COOKIE[$cart_cookie], true
 $products = [];
 $colors = [];
 
+// Fetch all products and colors for items in cart
 if (!empty($cart)) {
     $productIds = [];
     $colorNames = [];
     foreach (array_keys($cart) as $key) {
-        $parts = explode('|', $key, 2);
-        if (count($parts) < 2) continue;
-        list($pid, $color) = $parts;
-        $productIds[] = intval($pid);
-        $colorNames[] = $color;
+        $parts = explode('|', $key);
+        $productIds[] = intval($parts[0] ?? 0);
+        $colorNames[] = $parts[1] ?? '';
     }
     if (!empty($productIds)) {
         $ids = implode(',', array_unique($productIds));
@@ -36,7 +35,7 @@ if (!empty($cart)) {
             $products[$row['product_id']] = $row;
         }
         // Fetch all colors for these products
-        $color_stmt = $conn->prepare("SELECT product_id, color_name, image_url FROM product_colors WHERE product_id IN ($ids)");
+        $color_stmt = $conn->prepare("SELECT product_id, variant_name AS color_name, image_url FROM product_variants WHERE product_id IN ($ids)");
         $color_stmt->execute();
         $color_res = $color_stmt->get_result();
         while ($row = $color_res->fetch_assoc()) {
@@ -45,16 +44,55 @@ if (!empty($cart)) {
         $color_stmt->close();
     }
 }
+
+// Fetch charm prices for all charms in the cart
+$charm_prices = [];
+$charm_names = [];
+foreach ($cart as $key => $qty) {
+    $parts = explode('|', $key);
+    $charm = $parts[2] ?? '';
+    if ($charm) $charm_names[$charm] = true;
+}
+if (!empty($charm_names)) {
+    $in = "'" . implode("','", array_map([$conn, 'real_escape_string'], array_keys($charm_names))) . "'";
+    $sql = "SELECT charm_name, charm_base_price FROM charms WHERE charm_name IN ($in)";
+    $result = $conn->query($sql);
+    while ($row = $result->fetch_assoc()) {
+        $charm_prices[$row['charm_name']] = (float)$row['charm_base_price'];
+    }
+}
+
 $total = 0;
+
+// Get buyer_id for orders
+$buyer_id = null;
+if (isset($_SESSION['user_id'])) {
+    $stmt = $conn->prepare("SELECT buyer_id FROM buyers WHERE user_id = ?");
+    $stmt->bind_param("i", $_SESSION['user_id']);
+    $stmt->execute();
+    $stmt->bind_result($buyer_id);
+    $stmt->fetch();
+    $stmt->close();
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty($cart)) {
     // 1. Check available quantities before proceeding
     $invalid = false;
     $invalid_product = '';
     foreach ($cart as $key => $qty) {
-        $parts = explode('|', $key, 2);
-        if (count($parts) < 2) continue;
-        list($productId, $colorName) = $parts;
+        $parts = explode('|', $key);
+        list(
+            $productId,
+            $colorName,
+            $charm,
+            $charm_x,
+            $charm_y,
+            $engraving_option,
+            $engraving_name,
+            $engraving_color
+        ) = array_pad($parts, 8, '');
+
+        // Fetch current available quantity and product name
         $stmt = $conn->prepare("SELECT available_quantity, product_name FROM products WHERE product_id = ?");
         $stmt->bind_param("i", $productId);
         $stmt->execute();
@@ -74,9 +112,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty(
     }
 
     if ($buyer_id) {
-        // Get status_id for "Processing"
+        // Get status_id for "Pending"
         $status_id = null;
-        $stmt = $conn->prepare("SELECT status_id FROM order_status WHERE status_name = 'Processing' LIMIT 1");
+        $stmt = $conn->prepare("SELECT status_id FROM order_status WHERE status_name = 'Pending' LIMIT 1");
         $stmt->execute();
         $stmt->bind_result($status_id);
         $stmt->fetch();
@@ -87,20 +125,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty(
             exit();
         }
 
-        // Call create_order procedure
-        $stmt = $conn->prepare("CALL create_order(?, ?)");
+        // Create order
+        $stmt = $conn->prepare("INSERT INTO orders (buyer_id, status_id, order_date) VALUES (?, ?, CURDATE())");
         $stmt->bind_param("ii", $buyer_id, $status_id);
         $stmt->execute();
-        $result = $stmt->get_result();
-        $order_row = $result->fetch_assoc();
-        $order_id = $order_row['order_id'];
+        $order_id = $stmt->insert_id;
         $stmt->close();
 
-        // Insert order details using add_order_detail procedure
+        // Insert order details
         foreach ($cart as $key => $qty) {
-            $parts = explode('|', $key, 2);
-            if (count($parts) < 2) continue;
-            list($productId, $colorName) = $parts;
+            $parts = explode('|', $key);
+            list(
+                $productId,
+                $colorName,
+                $charm,
+                $charm_x,
+                $charm_y,
+                $engraving_option,
+                $engraving_name,
+                $engraving_color
+            ) = array_pad($parts, 8, '');
 
             // Fetch current base price
             $price_stmt = $conn->prepare("SELECT base_price FROM products WHERE product_id = ?");
@@ -110,10 +154,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty(
             $price_stmt->fetch();
             $price_stmt->close();
 
-            $total_price = $base_price * $qty;
+            // Add charm cost if present
+            $charm_cost = 0;
+            if ($charm && isset($charm_prices[$charm])) {
+                $charm_cost = $charm_prices[$charm];
+            }
+            $total_price = ($base_price + $charm_cost) * $qty;
 
-            $detail_stmt = $conn->prepare("CALL add_order_detail(?, ?, ?, ?, ?, ?)");
-            $detail_stmt->bind_param("iisidd", $order_id, $productId, $colorName, $qty, $base_price, $total_price);
+            // Fetch image URL for the variant
+            $image_url = '';
+            $img_stmt = $conn->prepare("SELECT image_url FROM product_variants WHERE product_id = ? AND variant_name = ?");
+            $img_stmt->bind_param("is", $productId, $colorName);
+            $img_stmt->execute();
+            $img_stmt->bind_result($image_url);
+            $img_stmt->fetch();
+            $img_stmt->close();
+
+            // --- Customization logic ---
+            $customization_id = null;
+            if ($engraving_option === 'include' || $charm) {
+                $cost = 0; // You can set your logic for customization cost
+                $stmt = $conn->prepare("INSERT INTO customizations (buyer_id, customized_name, customized_name_color, customization_cost) VALUES (?, ?, ?, ?)");
+                $stmt->bind_param("issd", $buyer_id, $engraving_name, $engraving_color, $cost);
+                $stmt->execute();
+                $customization_id = $stmt->insert_id;
+                $stmt->close();
+
+                // Insert into customization_charms if charm is present
+                if ($charm) {
+                    $charm_id = null;
+                    $stmt = $conn->prepare("SELECT charm_id FROM charms WHERE charm_name = ? LIMIT 1");
+                    $stmt->bind_param("s", $charm);
+                    $stmt->execute();
+                    $stmt->bind_result($charm_id);
+                    $stmt->fetch();
+                    $stmt->close();
+
+                    if ($charm_id) {
+                        $stmt = $conn->prepare("INSERT INTO customization_charms (customization_id, charm_id, x_position, y_position) VALUES (?, ?, ?, ?)");
+                        $stmt->bind_param("iiii", $customization_id, $charm_id, $charm_x, $charm_y);
+                        $stmt->execute();
+                        $stmt->close();
+                    }
+                }
+            }
+
+            // Insert order detail with customization_id
+            $detail_stmt = $conn->prepare("INSERT INTO order_details 
+                (order_id, product_id, customization_id, charm_name, variant_name, variant_url, order_quantity, base_price_at_order, total_price_at_order)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $detail_stmt->bind_param(
+                "iiisssidd",
+                $order_id,
+                $productId,
+                $customization_id,
+                $charm,
+                $colorName,
+                $image_url,
+                $qty,
+                $base_price,
+                $total_price
+            );
             $detail_stmt->execute();
             $detail_stmt->close();
 
@@ -158,25 +259,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty(
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($cart as $key => $qty):
-                        $parts = explode('|', $key, 2);
-                        if (count($parts) < 2) continue;
-                        list($productId, $colorName) = $parts;
-                        $product = $products[$productId] ?? null;
-                        $color = $colors[$key] ?? null;
-                        if (!$product || !$color) continue;
-                        $img = $color['image_url'] ?: '/daintyscapes/assets/img/default-product.png';
-                        $subtotal = $product['base_price'] * $qty;
-                        $total += $subtotal;
-                    ?>
-                        <tr>
-                            <td><img src="<?= htmlspecialchars($img) ?>" alt="<?= htmlspecialchars($product['product_name']) ?>" style="width:60px;height:60px;object-fit:cover;"></td>
-                            <td><?= htmlspecialchars($product['product_name']) ?></td>
-                            <td><?= htmlspecialchars($colorName) ?></td>
-                            <td><?= $qty ?></td>
-                            <td>₱<?= number_format($subtotal, 2) ?></td>
-                        </tr>
-                    <?php endforeach; ?>
+                <?php foreach ($cart as $key => $qty):
+                    $parts = explode('|', $key);
+                    list(
+                        $productId,
+                        $colorName,
+                        $charm,
+                        $charm_x,
+                        $charm_y,
+                        $engraving_option,
+                        $engraving_name,
+                        $engraving_color
+                    ) = array_pad($parts, 8, '');
+
+                    $product = $products[$productId] ?? null;
+                    $color = $colors[$productId . '|' . $colorName] ?? null;
+                    if (!$product || !$color) continue;
+                    $img = $color['image_url'] ?: '/daintyscapes/assets/img/default-product.png';
+
+                    // Add charm cost if present
+                    $charm_cost = 0;
+                    if ($charm && isset($charm_prices[$charm])) {
+                        $charm_cost = $charm_prices[$charm];
+                    }
+                    $subtotal = ($product['base_price'] + $charm_cost) * $qty;
+                    $total += $subtotal;
+                ?>
+                    <tr>
+                        <td><img src="<?= htmlspecialchars($img) ?>" alt="<?= htmlspecialchars($product['product_name']) ?>" style="width:60px;height:60px;object-fit:cover;"></td>
+                        <td><?= htmlspecialchars($product['product_name']) ?></td>
+                        <td><?= htmlspecialchars($colorName) ?></td>
+                        <td><?= $qty ?></td>
+                        <td>₱<?= number_format($subtotal, 2) ?></td>
+                    </tr>
+                    <?php if ($charm || $engraving_option === 'include'): ?>
+                    <tr>
+                        <td colspan="5" style="background:#fafafa;">
+                            <?php if ($charm): ?>
+                                <strong>Charm:</strong> <?= htmlspecialchars($charm) ?> (Position: X <?= (int)$charm_x ?>, Y <?= (int)$charm_y ?>)
+                                <?php if (isset($charm_prices[$charm])): ?>
+                                    <span style="color:#888;">(+₱<?= number_format($charm_prices[$charm], 2) ?> per item)</span>
+                                <?php endif; ?>
+                                <br>
+                            <?php endif; ?>
+                            <?php if ($engraving_option === 'include'): ?>
+                                <strong>Engraving:</strong>
+                                <?= htmlspecialchars($engraving_name) ?>
+                                <span style="display:inline-block;width:16px;height:16px;background:<?= htmlspecialchars($engraving_color) ?>;vertical-align:middle;border:1px solid #ccc;margin-left:4px;" title="Engraving Color"></span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php endif; ?>
+                <?php endforeach; ?>
                 </tbody>
             </table>
 
