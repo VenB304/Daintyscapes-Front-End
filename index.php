@@ -217,6 +217,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <?php endif; ?>
 });
 </script>
+    
 
 </body>
+<?php include('../daintyscapes/includes/footer.php'); ?>
 </html>

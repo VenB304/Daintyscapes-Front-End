@@ -102,13 +102,15 @@ $stmt->close();
 
 <script>
 function updateProductImage() {
-    var select = document.getElementById('color');
-    var img = document.getElementById('product-image');
-    var selected = select.options[select.selectedIndex];
-    var imgUrl = selected.getAttribute('data-img');
-    var stock = selected.getAttribute('data-stock');
+    var select          = document.getElementById('color');
+    var img             = document.getElementById('product-image');
+    var selected        = select.options[select.selectedIndex];
+    var imgUrl          = selected.getAttribute('data-img');
+    var stock           = selected.getAttribute('data-stock');
     if (imgUrl) img.src = imgUrl;
+    
     document.getElementById('hidden-color').value = select.value;
+    
     var qtyInput = document.getElementById('quantity');
     var maxLabel = document.getElementById('max-stock-label');
     qtyInput.max = stock;
