@@ -155,16 +155,18 @@ CREATE PROCEDURE add_order_detail(
     IN p_color_name VARCHAR(50),
     IN p_order_quantity INT,
     IN p_base_price DECIMAL(19,4),
-    IN p_total_price DECIMAL(19,4)
+    IN p_total_price DECIMAL(19,4),
+    IN p_charm_name VARCHAR(30),
+    IN p_variant_url VARCHAR(255)
 )
 BEGIN
     INSERT INTO order_details (
         order_id, product_id, variant_name, order_quantity, base_price_at_order, total_price_at_order, charm_name, variant_url
     ) VALUES (
-        p_order_id, p_product_id, p_color_name, p_order_quantity, p_base_price, p_total_price, '', ''
+        p_order_id, p_product_id, p_color_name, p_order_quantity, p_base_price, p_total_price, p_charm_name, p_variant_url
     );
-    -- You can add more params for charm_name, variant_url if needed
 END$$
+DELIMITER ;
 
 -- ----------------------------------------------------------
 
@@ -334,28 +336,31 @@ CREATE PROCEDURE get_buyer_orders(
     IN p_username VARCHAR(50)
 )
 BEGIN
-    SELECT 
-        o.order_id,
-        o.order_date AS date,
-        os.status_name AS status,
-        od.product_id,
-        p.product_name AS name,
-        od.charm_name,
-        od.variant_name,
-        od.variant_url AS image,
-        od.order_quantity AS quantity,
-        od.base_price_at_order,
-        od.total_price_at_order
+SELECT 
+    o.order_id,
+    o.order_date AS date,
+    s.status_name AS status,
+    od.product_id,
+    p.product_name AS name,
+    od.variant_name,
+    od.variant_url AS image,
+    od.order_quantity AS quantity,
+    od.base_price_at_order,
+    od.total_price_at_order,
+    c.charm_name,
+    cc.x_position,
+    cc.y_position,
+    cust.customized_name AS engraving_name,
+    cust.customized_name_color AS engraving_color
     FROM orders o
-    JOIN order_details od     ON o.order_id    = od.order_id
-    JOIN products p           ON od.product_id = p.product_id
-    LEFT JOIN order_status os ON o.status_id   = os.status_id
-    WHERE o.buyer_id = (
-        SELECT b.buyer_id FROM buyers b 
-        JOIN users u ON b.user_id = u.user_id 
-        WHERE u.username = p_username
-    )
-    ORDER BY o.order_date DESC, o.order_id DESC;    
+    JOIN order_status s ON o.status_id = s.status_id
+    JOIN order_details od ON o.order_id = od.order_id
+    JOIN products p ON od.product_id = p.product_id
+    LEFT JOIN customizations cust ON od.customization_id = cust.customization_id
+    LEFT JOIN customization_charms cc ON cust.customization_id = cc.customization_id
+    LEFT JOIN charms c ON cc.charm_id = c.charm_id
+    WHERE o.buyer_id = (SELECT buyer_id FROM buyers WHERE username = p_username)
+    ORDER BY o.order_date DESC, o.order_id DESC;
 END$$
 
 -- ----------------------------------------------------------
