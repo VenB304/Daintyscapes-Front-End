@@ -68,7 +68,20 @@ BEGIN
         INSERT INTO products (category_id, product_name, available_quantity, base_price)
         VALUES (fk_category_id, p_product_name, p_available_quantity, p_base_price);
 
+        SELECT LAST_INSERT_ID() AS product_id;
     COMMIT;
+END$$
+
+-- ----------------------------------------------------------
+
+CREATE PROCEDURE add_product_variant(
+    IN p_product_id INT,
+    IN p_variant_name VARCHAR(50),
+    IN p_image_url VARCHAR(255)
+)
+BEGIN
+    INSERT INTO product_variants (product_id, variant_name, image_url)
+    VALUES (p_product_id, p_variant_name, p_image_url);
 END$$
 
 -- ----------------------------------------------------------
