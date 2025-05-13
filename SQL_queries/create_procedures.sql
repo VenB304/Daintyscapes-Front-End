@@ -155,16 +155,18 @@ CREATE PROCEDURE add_order_detail(
     IN p_color_name VARCHAR(50),
     IN p_order_quantity INT,
     IN p_base_price DECIMAL(19,4),
-    IN p_total_price DECIMAL(19,4)
+    IN p_total_price DECIMAL(19,4),
+    IN p_charm_name VARCHAR(30),
+    IN p_variant_url VARCHAR(255)
 )
 BEGIN
     INSERT INTO order_details (
         order_id, product_id, variant_name, order_quantity, base_price_at_order, total_price_at_order, charm_name, variant_url
     ) VALUES (
-        p_order_id, p_product_id, p_color_name, p_order_quantity, p_base_price, p_total_price, '', ''
+        p_order_id, p_product_id, p_color_name, p_order_quantity, p_base_price, p_total_price, p_charm_name, p_variant_url
     );
-    -- You can add more params for charm_name, variant_url if needed
 END$$
+DELIMITER ;
 
 -- ----------------------------------------------------------
 
