@@ -359,7 +359,7 @@ SELECT
     LEFT JOIN customizations cust ON od.customization_id = cust.customization_id
     LEFT JOIN customization_charms cc ON cust.customization_id = cc.customization_id
     LEFT JOIN charms c ON cc.charm_id = c.charm_id
-    WHERE o.buyer_id = (SELECT buyer_id FROM buyers WHERE username = ?)
+    WHERE o.buyer_id = (SELECT buyer_id FROM buyers WHERE username = p_username)
     ORDER BY o.order_date DESC, o.order_id DESC;
 END$$
 
