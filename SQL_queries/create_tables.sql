@@ -37,7 +37,7 @@ CREATE TABLE orders (
     status_id INT NOT NULL,
     order_date DATE NOT NULL,
     FOREIGN KEY (buyer_id) REFERENCES buyers (buyer_id) ON DELETE CASCADE,
-    FOREIGN KEY (status_id) REFERENCES order_status (status_id)
+    FOREIGN KEY (status_id) REFERENCES order_status (status_id) ON DELETE CASCADE
 );
 
 CREATE TABLE product_categories (
@@ -51,14 +51,14 @@ CREATE TABLE products (
     product_name VARCHAR(100) NOT NULL,
     available_quantity INT NOT NULL DEFAULT 0,
     base_price DECIMAL(19,4) NOT NULL,
-    FOREIGN KEY (category_id) REFERENCES product_categories (category_id)
+    FOREIGN KEY (category_id) REFERENCES product_categories (category_id) ON DELETE CASCADE
 );
 
 CREATE TABLE product_variants (
-  variant_id INT NOT NULL,
+  variant_id INT PRIMARY KEY AUTO_INCREMENT,
   product_id INT NOT NULL,
   variant_name VARCHAR(50) NOT NULL,
-  image_url VARCHAR(255) NOT NULL
+  image_url VARCHAR(255) NOT NULL,
   FOREIGN KEY (product_id) REFERENCES products (product_id) ON DELETE CASCADE
 )
 
@@ -84,7 +84,7 @@ CREATE TABLE customization_charms (
     x_position INT NOT NULL,
     y_position INT NOT NULL,
     FOREIGN KEY (customization_id) REFERENCES customizations (customization_id) ON DELETE CASCADE,
-    FOREIGN KEY (charm_id) REFERENCES charms (charm_id)
+    FOREIGN KEY (charm_id) REFERENCES charms (charm_id) ON DELETE CASCADE
 );
 
 CREATE TABLE order_details (
@@ -92,12 +92,15 @@ CREATE TABLE order_details (
     order_id INT NOT NULL,
     product_id INT NOT NULL,
     customization_id INT NOT NULL,
+    charm_name VARCHAR(30) NOT NULL,
+    variant_name VARCHAR(50) NOT NULL,
+    variant_url VARCHAR(255) NOT NULL,
     order_quantity INT NOT NULL,
     base_price_at_order DECIMAL(19,4) NOT NULL,
-    total_price_at_order DECIMAL(19,4) NOT NULL
+    total_price_at_order DECIMAL(19,4) NOT NULL,
     FOREIGN KEY (order_id) REFERENCES orders (order_id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES products (product_id),
-    FOREIGN KEY (customization_id) REFERENCES customizations (customization_id)
+    FOREIGN KEY (product_id) REFERENCES products (product_id) ON DELETE CASCADE,
+    FOREIGN KEY (customization_id) REFERENCES customizations (customization_id) ON DELETE CASCADE
 );
 
 -- TABLES THAT HAVE CHANGED PRODUCTS, PRODUCT_VARIANTS, ORDER_DETAILS

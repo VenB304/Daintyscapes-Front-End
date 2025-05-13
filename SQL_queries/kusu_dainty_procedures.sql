@@ -127,6 +127,83 @@ END $$
 
 -- ----------------------------------------------------------
 
+CREATE PROCEDURE checkout_order(
+    IN p_buyer_id INT
+)
+BEGIN
+    DECLARE v_status_id INT;
+    DECLARE v_order_id INT;
+    DECLARE v_product_id INT;
+    DECLARE v_color_name VARCHAR(50);
+    DECLARE v_order_quantity INT;
+    DECLARE v_base_price DECIMAL(19,4);
+    DECLARE v_total_price DECIMAL(19,4);
+    DECLARE v_available_quantity INT;
+
+    SELECT status_id INTO v_status_id
+    FROM order_status
+    WHERE status_name = 'Processing'
+    LIMIT 1;
+
+    IF v_status_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Order status "Processing" not found.';
+    END IF;
+
+    START TRANSACTION;
+
+    -- Insert order
+    INSERT INTO orders (buyer_id, status_id, order_date)
+    VALUES (p_buyer_id, v_status_id, NOW());
+    SET v_order_id = LAST_INSERT_ID();
+
+    -- Iterate through the temporary cart table
+    DECLARE cart_cursor CURSOR FOR
+        SELECT product_id, color_name, order_quantity
+        FROM temp_cart;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+
+    OPEN cart_cursor;
+
+    read_loop: LOOP
+        FETCH cart_cursor INTO v_product_id, v_color_name, v_order_quantity;
+
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        -- Check available quantity
+        SELECT available_quantity, base_price INTO v_available_quantity, v_base_price
+        FROM products
+        WHERE product_id = v_product_id;
+
+        IF v_available_quantity < v_order_quantity THEN
+            ROLLBACK;
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = CONCAT('Insufficient stock for product ID: ', v_product_id);
+        END IF;
+
+        -- Calculate total price
+        SET v_total_price = v_base_price * v_order_quantity;
+
+        -- Insert order details
+        INSERT INTO order_details (order_id, product_id, color_name, order_quantity, base_price_at_order, total_price_at_order)
+        VALUES (v_order_id, v_product_id, v_color_name, v_order_quantity, v_base_price, v_total_price);
+
+        -- Update product stock
+        UPDATE products
+        SET available_quantity = available_quantity - v_order_quantity
+        WHERE product_id = v_product_id;
+    END LOOP;
+
+    CLOSE cart_cursor;
+
+    COMMIT;
+END $$
+
+-- ----------------------------------------------------------
+
 CREATE PROCEDURE update_buyer(
     IN p_username VARCHAR(50),
     IN p_first_name VARCHAR(50),
@@ -143,10 +220,11 @@ CREATE PROCEDURE update_buyer(
 )
 BEGIN
     DECLARE v_user_id INT;
+    DECLARE v_buyer_id INT;
     
     START TRANSACTION;
 		SELECT user_id INTO v_user_id FROM users WHERE username = p_username;
-		SELECT buyer_id INTO v_user_id FROM buyers WHERE user_id = v_user_id;
+		SELECT buyer_id INTO v_buyer_id FROM buyers WHERE user_id = v_user_id;
 
 		UPDATE users
 		SET first_name = p_first_name, last_name = p_last_name
@@ -154,7 +232,7 @@ BEGIN
 
 		UPDATE buyers
 		SET email = p_email, phone_number = p_phone_number
-		WHERE user_id = v_user_id;
+		WHERE buyer_id = v_buyer_id;
 
 		UPDATE addresses
 		SET country = p_country,
@@ -162,7 +240,7 @@ BEGIN
 			barangay = p_barangay,
 			house_number = p_house_number,
 			postal_code = p_postal_code
-		WHERE user_id = v_user_id;
+		WHERE buyer_id = v_buyer_id;
     COMMIT;
 END$$
 
@@ -279,92 +357,34 @@ END$$
 
 -- ----------------------------------------------------------
 
-DELIMITER $$
 CREATE PROCEDURE get_buyer_orders(
-	IN p_username VARCHAR(50)
+    IN p_username VARCHAR(50)
 )
 BEGIN
-	SELECT 
-		o.order_id,
-		o.order_date AS date,
-		os.status_name AS status,
-		od.product_id,
-		p.product_name AS name,
-		p.image_url AS image,
-		od.order_quantity AS quantity,
-		p.base_price AS price
-	FROM orders o
-	JOIN buyers b 			  ON o.buyer_id 	= b.buyer_id
-	JOIN users u 			  ON b.user_id 		= u.user_id
-	JOIN order_details od 	  ON o.order_id 	= od.order_id
-	JOIN products p 		  ON od.product_id 	= p.product_id
-	LEFT JOIN order_status os ON o.status_id 	= os.status_id
-	WHERE u.username = p_username
-	ORDER BY o.order_date DESC, o.order_id DESC;
+    SELECT 
+        o.order_id,
+        o.order_date AS date,
+        os.status_name AS status,
+        od.product_id,
+        p.product_name AS name,
+        od.charm_name,
+        od.variant_name,
+        od.variant_url AS image,
+        od.order_quantity AS quantity,
+        od.base_price_at_order,
+        od.total_price_at_order
+    FROM orders o
+    JOIN order_details od     ON o.order_id    = od.order_id
+    JOIN products p           ON od.product_id = p.product_id
+    LEFT JOIN order_status os ON o.status_id   = os.status_id
+    WHERE o.buyer_id = (
+        SELECT b.buyer_id FROM buyers b 
+        JOIN users u ON b.user_id = u.user_id 
+        WHERE u.username = p_username
+    )
+    ORDER BY o.order_date DESC, o.order_id DESC;    
 END$$
-
--- ----------------------------------------------------------
-
-
-CREATE DEFINER=`root`@`localhost` PROCEDURE `modify_product` (IN `p_product_id` INT, IN `p_product_category_name` TEXT, IN `p_product_name` VARCHAR(100), IN `p_product_color` VARCHAR(50), IN `p_available_quantity` INT, IN `p_base_price` DECIMAL(19,4))   BEGIN
-    DECLARE fk_category_id INT;
-
-    START TRANSACTION;
-        SELECT category_id INTO fk_category_id
-        FROM product_categories 
-        WHERE category_name = p_product_category_name
-        LIMIT 1;
-
-        IF fk_category_id IS NULL THEN
-            INSERT INTO product_categories (category_name) VALUES (p_product_category_name);
-            SET fk_category_id = LAST_INSERT_ID();
-        END IF;
-
-        UPDATE products
-        SET category_id = fk_category_id,
-            product_name = p_product_name,
-            available_quantity = p_available_quantity,
-            base_price = p_base_price
-        WHERE product_id = p_product_id;
-
-    COMMIT;
-END$$
-
--- ----------------------------------------------------------
-
-CREATE DEFINER=`root`@`localhost` PROCEDURE `update_buyer` (IN `p_username` VARCHAR(50), IN `p_first_name` VARCHAR(50), IN `p_last_name` VARCHAR(50), IN `p_email` VARCHAR(50), IN `p_phone_number` VARCHAR(17), IN `p_country` VARCHAR(50), IN `p_city` VARCHAR(50), IN `p_barangay` VARCHAR(50), IN `p_house_number` VARCHAR(20), IN `p_postal_code` VARCHAR(10))   BEGIN
-    DECLARE v_user_id INT;
-    DECLARE v_buyer_id INT;
-
-    -- Get user_id
-    SELECT user_id INTO v_user_id FROM users WHERE username = p_username;
-    -- Get buyer_id
-    SELECT buyer_id INTO v_buyer_id FROM buyers WHERE user_id = v_user_id;
-
-    -- Update users table
-    UPDATE users
-    SET first_name = p_first_name, last_name = p_last_name
-    WHERE user_id = v_user_id;
-
-    -- Update buyers table
-    UPDATE buyers
-    SET email = p_email, phone_number = p_phone_number
-    WHERE buyer_id = v_buyer_id;
-
-    -- Update addresses table (if exists, else insert)
-    IF EXISTS (SELECT 1 FROM addresses WHERE buyer_id = v_buyer_id) THEN
-        UPDATE addresses
-        SET country = p_country,
-            city = p_city,
-            barangay = p_barangay,
-            house_number = p_house_number,
-            postal_code = p_postal_code
-        WHERE buyer_id = v_buyer_id;
-    ELSE
-        INSERT INTO addresses (buyer_id, country, city, barangay, house_number, postal_code)
-        VALUES (v_buyer_id, p_country, p_city, p_barangay, p_house_number, p_postal_code);
-    END IF;
-END$$
+DELIMITER ;
 
 -- ----------------------------------------------------------
 -- ----------------------------------------------------------
