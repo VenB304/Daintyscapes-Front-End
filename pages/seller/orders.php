@@ -81,21 +81,20 @@ $stmt = $conn->prepare("
         u.username AS buyer_username,
         od.product_id,
         p.product_name,
-        od.color_name,
-        (SELECT image_url FROM product_colors WHERE product_id = p.product_id AND color_name = od.color_name LIMIT 1) AS image_url,
+        od.variant_name,
+        (SELECT image_url FROM product_variants WHERE product_id = p.product_id AND variant_name = od.variant_name LIMIT 1) AS image_url,
         od.order_quantity,
         od.base_price_at_order,
         od.total_price_at_order
     FROM orders o
     JOIN order_details od ON o.order_id = od.order_id
     JOIN products p ON od.product_id = p.product_id
-    JOIN seller s ON s.user_id = ?
     JOIN buyers b ON o.buyer_id = b.buyer_id
     JOIN users u ON b.user_id = u.user_id
     LEFT JOIN order_status os ON o.status_id = os.status_id
     ORDER BY o.order_date DESC, o.order_id DESC
 ");
-$stmt->bind_param("i", $user_id);
+
 $stmt->execute();
 $result = $stmt->get_result();
 

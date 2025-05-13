@@ -21,35 +21,34 @@ if (isset($_GET['id'])) {
     $stmt->close();
     $conn->next_result(); // Important when using stored procedures with MySQLi
 
-    $colors = [];
+    $variants = [];
     if ($product) {
         $stmt = $conn->prepare("SELECT variant_id, variant_name, image_url FROM product_variants WHERE product_id = ?");
         $stmt->bind_param("i", $product['product_id']);
         $stmt->execute();
         $res = $stmt->get_result();
         while ($row = $res->fetch_assoc()) {
-            $colors[] = $row;
+            $variants[] = $row;
         }
         $stmt->close();
     }
 }
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_id'])) {
     $id = intval($_POST['product_id']);
     $category = trim($_POST['category']);
     $name = trim($_POST['name']);
-    // Remove all old colors for this product
+    // Remove all old variants for this product
     $stmt = $conn->prepare("CALL remove_product_variant(?)");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $stmt->close();
 
-    // Insert all current colors
-    if (!empty($_POST['colors']) && !empty($_POST['color_images'])) {
+    // Insert all current variants
+    if (!empty($_POST['variants']) && !empty($_POST['variant_images'])) {
         $color_stmt = $conn->prepare("CALL add_product_variant(?, ?, ?)");
-        foreach ($_POST['colors'] as $i => $color) {
+        foreach ($_POST['variants'] as $i => $color) {
             $variant_name = trim($color);
-            $color_image = trim($_POST['color_images'][$i]);
+            $color_image = trim($_POST['variant_images'][$i]);
             if ($variant_name !== '' && $color_image !== '') {
                 $color_stmt->bind_param("iss", $id, $variant_name, $color_image);
                 $color_stmt->execute();
@@ -57,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_id'])) {
                 while ($conn->more_results() && $conn->next_result()) { $conn->store_result(); }
             }
         }
-        $color_stmt->close();
+        $variant_stmt->close();
     }
     $quantity = intval($_POST['quantity']);
     $price = floatval($_POST['price']);
@@ -92,22 +91,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_id'])) {
         <label>Product Name</label>
         <input type="text" name="name" value="<?= htmlspecialchars($product['product_name']) ?>" required>
         <div id="color-section">
-            <label>Colors & Images</label>
-            <?php foreach ($colors as $i => $c): ?>
+            <label>Variants & Images</label>
+            <?php foreach ($variants as $i => $c): ?>
                 <div class="color-row">
                     <input type="hidden" name="color_ids[]" value="<?= $c['variant_id'] ?>">
-                    <input type="text" name="colors[]" placeholder="Color Name" value="<?= htmlspecialchars($c['variant_name']) ?>" required>
-                    <input type="text" name="color_images[]" placeholder="Image URL" value="<?= htmlspecialchars($c['image_url']) ?>" required>
+                    <input type="text" name="variants[]" placeholder="Color Name" value="<?= htmlspecialchars($c['variant_name']) ?>" required>
+                    <input type="text" name="variant_images[]" placeholder="Image URL" value="<?= htmlspecialchars($c['image_url']) ?>" required>
                     <button type="button" onclick="this.parentNode.remove()">-</button>
                 </div>
             <?php endforeach; ?>
             <div class="color-row">
-                <input type="hidden" name="color_ids[]" value="">
-                <input type="text" name="colors[]" placeholder="Color Name">
-                <input type="text" name="color_images[]" placeholder="Image URL">
+                <input type="hidden" name="variant_ids[]" value="">
+                <input type="text" name="variants[]" placeholder="Variant Name">
+                <input type="text" name="variant_images[]" placeholder="Image URL">
                 <button type="button" onclick="this.parentNode.remove()">-</button>
             </div>
-            <button type="button" onclick="addColorRow()">+ Add Color</button>
+            <button type="button" onclick="addColorRow()">+ Add Variant</button>
         </div>
         <label>Available Quantity</label>
         <input type="number" name="quantity" min="1" value="<?= htmlspecialchars($product['available_quantity']) ?>" required>
@@ -126,9 +125,9 @@ function addColorRow() {
     var row = document.createElement('div');
     row.className = 'color-row';
     row.innerHTML = `
-        <input type="hidden" name="color_ids[]" value="">
-        <input type="text" name="colors[]" placeholder="Color Name" required>
-        <input type="text" name="color_images[]" placeholder="Image URL" required>
+        <input type="hidden" name="variant_ids[]" value="">
+        <input type="text" name="variants[]" placeholder="Variant Name" required>
+        <input type="text" name="variant_images[]" placeholder="Image URL" required>
         <button type="button" onclick="this.parentNode.remove()">-</button>
     `;
     document.getElementById('color-section').appendChild(row);
