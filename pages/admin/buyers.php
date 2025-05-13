@@ -3,6 +3,8 @@ session_start();
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 include_once '../../includes/db.php'; // Include the database connection
+include_once '../../includes/header.php';
+
 
 // Redirect if not an admin
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
@@ -77,10 +79,10 @@ $stmt->close();
 <head>
     <meta charset="UTF-8">
     <title>Buyer Management</title>
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+    
 </head>
 <body class="management-container">
-    <?php include($_SERVER['DOCUMENT_ROOT'] . '/includes/header.php'); ?>
         <h1>Buyer Management</h1>
 
         <!-- Add Buyer Section -->

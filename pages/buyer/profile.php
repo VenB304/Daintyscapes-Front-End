@@ -75,6 +75,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
+<head>
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+
 <div class="page-container">
     <h2>Your Profile</h2>
 

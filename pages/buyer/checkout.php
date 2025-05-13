@@ -70,6 +70,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty(
 }
 ?>
 
+<head>
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+
 <div class="page-container">
     <h2>Checkout</h2>
 

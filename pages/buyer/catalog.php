@@ -3,7 +3,7 @@ session_start();
 
 // Redirect if not a buyer
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'buyer') {
-    header('Location: /daintyscapes/login.php');
+    header('Location: ../../login.php');
     exit();
 }
 
@@ -84,6 +84,10 @@ while ($row = $result->fetch_assoc()) {
 $stmt->close();
 ?>
 
+
+<head>
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
 <div class="page-container">
     <h1>Catalog</h1>
 

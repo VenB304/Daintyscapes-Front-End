@@ -1,5 +1,5 @@
 <?php 
-include('includes/header.php');
+include('../daintyscapes/includes/header.php');
 include_once('includes/db.php');
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -9,13 +9,13 @@ if (session_status() === PHP_SESSION_NONE) {
 if (isset($_SESSION['role'])) {
     switch ($_SESSION['role']) {
         case 'buyer':
-            header("Location: pages/buyer/catalog.php");
+            header("Location: ../daintyscapes/pages/buyer/catalog.php ");
             exit();
         case 'seller':
-            header("Location: pages/seller/dashboard.php");
+            header("Location: ../daintyscapes/pages/seller/products.php");
             exit();
         case 'admin':
-            header("Location: pages/admin/buyers.php");
+            header("Location: ../daintyscapes/pages/admin/buyers.php");
             exit();
     }
 }
@@ -123,6 +123,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 ?>
 
 <div class="index-container">
+    
+<head>
+    <link rel="stylesheet" href="../../daintyscapes/assets/css/styles.css">
+</head>
 
     <div class="landing-container">
         <h1>Welcome to Daintyscapes</h1>

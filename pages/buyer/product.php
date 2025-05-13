@@ -24,6 +24,10 @@ if (!$product) {
 }
 ?>
 
+<head>
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+
 <div class="page-container">
     <div class="product-detail-container">
         <!-- Product Image -->

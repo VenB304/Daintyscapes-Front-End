@@ -43,6 +43,10 @@ if ($username) {
 }
 ?>
 
+<head>
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+
 <div class="page-container">
     <h2>Your Orders</h2>
 
