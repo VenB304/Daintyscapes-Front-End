@@ -60,7 +60,7 @@ CREATE TABLE product_variants (
   variant_name VARCHAR(50) NOT NULL,
   image_url VARCHAR(255) NOT NULL,
   FOREIGN KEY (product_id) REFERENCES products (product_id) ON DELETE CASCADE
-)
+);
 
 CREATE TABLE customizations (
     customization_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -91,7 +91,8 @@ CREATE TABLE order_details (
     order_detail_id INT PRIMARY KEY AUTO_INCREMENT,
     order_id INT NOT NULL,
     product_id INT NOT NULL,
-    customization_id INT NOT NULL,
+    customization_id INT,
+    charm_id INT,
     charm_name VARCHAR(30) NOT NULL,
     variant_name VARCHAR(50) NOT NULL,
     variant_url VARCHAR(255) NOT NULL,
@@ -100,7 +101,8 @@ CREATE TABLE order_details (
     total_price_at_order DECIMAL(19,4) NOT NULL,
     FOREIGN KEY (order_id) REFERENCES orders (order_id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products (product_id) ON DELETE CASCADE,
-    FOREIGN KEY (customization_id) REFERENCES customizations (customization_id) ON DELETE CASCADE
+    FOREIGN KEY (customization_id) REFERENCES customizations (customization_id) ON DELETE SET NULL,
+    FOREIGN KEY (charm_id) REFERENCES charms (charm_id) ON DELETE SET NULL
 );
 
 -- TABLES THAT HAVE CHANGED PRODUCTS, PRODUCT_VARIANTS, ORDER_DETAILS

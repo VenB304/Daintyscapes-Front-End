@@ -48,7 +48,6 @@ END $$
 CREATE PROCEDURE add_product(
     IN p_product_category_name TEXT,
     IN p_product_name VARCHAR(100),
-    IN p_product_color VARCHAR(50),
     IN p_available_quantity INT,
     IN p_base_price DECIMAL(19,4),
 )
@@ -66,8 +65,8 @@ BEGIN
             SET fk_category_id = LAST_INSERT_ID();
         END IF;
 
-        INSERT INTO products (category_id, product_name, product_color, available_quantity, base_price)
-        VALUES (fk_category_id, p_product_name, p_product_color, p_available_quantity, p_base_price);
+        INSERT INTO products (category_id, product_name, available_quantity, base_price)
+        VALUES (fk_category_id, p_product_name, p_available_quantity, p_base_price);
 
     COMMIT;
 END$$
@@ -75,41 +74,51 @@ END$$
 -- ----------------------------------------------------------
 
 CREATE PROCEDURE add_order(
-	IN p_buyer_id INT,
+    IN p_buyer_id INT,
     IN p_status_id INT,
     IN p_product_id INT,
     IN p_customization_id INT,
-    IN p_order_quantity INT
+    IN p_charm_id INT,
+    IN p_charm_name VARCHAR(30),
+    IN p_variant_name VARCHAR(50),
+    IN p_variant_url VARCHAR(255),
+    IN p_order_quantity INT,
+    IN p_base_price DECIMAL(19,4),
+    IN p_total_price DECIMAL(19,4)
 )
 BEGIN
-	DECLARE product_quantity INT;
     DECLARE v_order_id INT;
-    
+    DECLARE product_quantity INT;
+
     START TRANSACTION;
-		
+
         -- Check stock available_quantity
         SELECT available_quantity INTO product_quantity
         FROM products
         WHERE product_id = p_product_id;
-        
+
         IF product_quantity < p_order_quantity THEN
-			ROLLBACK;
+            ROLLBACK;
             SIGNAL SQLSTATE '45000'
-				SET MESSAGE_TEXT = 'Available Quantity Low.';
-		ELSE
-			INSERT INTO orders (buyer_id, status_id, order_date)
+                SET MESSAGE_TEXT = 'Available Quantity Low.';
+        ELSE
+            INSERT INTO orders (buyer_id, status_id, order_date)
             VALUES (p_buyer_id, p_status_id, CURDATE());
 
             SET v_order_id = LAST_INSERT_ID();
-            
-            INSERT INTO order_details (order_id, product_id, customization_id, order_quantity)
-            VALUES (v_order_id, p_product_id, p_customization_id, p_order_quantity); 
-            
+
+            INSERT INTO order_details (
+                order_id, product_id, customization_id, charm_id, charm_name, variant_name, variant_url, order_quantity, base_price_at_order, total_price_at_order
+            ) VALUES (
+                v_order_id, p_product_id, p_customization_id, p_charm_id, p_charm_name, p_variant_name, p_variant_url, p_order_quantity, p_base_price, p_total_price
+            );
+
             UPDATE products
             SET available_quantity = available_quantity - p_order_quantity
             WHERE product_id = p_product_id;
-		END IF;
-	COMMIT;
+        END IF;
+
+    COMMIT;
 END $$
 
 -- ----------------------------------------------------------
@@ -134,12 +143,18 @@ BEGIN
     DECLARE v_status_id INT;
     DECLARE v_order_id INT;
     DECLARE v_product_id INT;
-    DECLARE v_color_name VARCHAR(50);
+    DECLARE v_customization_id INT;
+    DECLARE v_charm_id INT;
+    DECLARE v_charm_name VARCHAR(30);
+    DECLARE v_variant_name VARCHAR(50);
+    DECLARE v_variant_url VARCHAR(255);
     DECLARE v_order_quantity INT;
     DECLARE v_base_price DECIMAL(19,4);
     DECLARE v_total_price DECIMAL(19,4);
     DECLARE v_available_quantity INT;
+    DECLARE done INT DEFAULT 0;
 
+    -- Get status_id for 'Processing'
     SELECT status_id INTO v_status_id
     FROM order_status
     WHERE status_name = 'Processing'
@@ -152,52 +167,55 @@ BEGIN
 
     START TRANSACTION;
 
-    -- Insert order
-    INSERT INTO orders (buyer_id, status_id, order_date)
-    VALUES (p_buyer_id, v_status_id, NOW());
-    SET v_order_id = LAST_INSERT_ID();
+        -- Insert order
+        INSERT INTO orders (buyer_id, status_id, order_date)
+        VALUES (p_buyer_id, v_status_id, NOW());
+        SET v_order_id = LAST_INSERT_ID();
 
-    -- Iterate through the temporary cart table
-    DECLARE cart_cursor CURSOR FOR
-        SELECT product_id, color_name, order_quantity
-        FROM temp_cart;
+        -- Cursor for cart items
+        DECLARE cart_cursor CURSOR FOR
+            SELECT product_id, customization_id, charm_id, charm_name, variant_name, variant_url, order_quantity
+            FROM temp_cart;
 
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
+        DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
 
-    OPEN cart_cursor;
+        OPEN cart_cursor;
 
-    read_loop: LOOP
-        FETCH cart_cursor INTO v_product_id, v_color_name, v_order_quantity;
+        read_loop: LOOP
+            FETCH cart_cursor INTO v_product_id, v_customization_id, v_charm_id, v_charm_name, v_variant_name, v_variant_url, v_order_quantity;
 
-        IF done THEN
-            LEAVE read_loop;
-        END IF;
+            IF done THEN
+                LEAVE read_loop;
+            END IF;
 
-        -- Check available quantity
-        SELECT available_quantity, base_price INTO v_available_quantity, v_base_price
-        FROM products
-        WHERE product_id = v_product_id;
+            -- Get price and stock
+            SELECT available_quantity, base_price INTO v_available_quantity, v_base_price
+            FROM products
+            WHERE product_id = v_product_id;
 
-        IF v_available_quantity < v_order_quantity THEN
-            ROLLBACK;
-            SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = CONCAT('Insufficient stock for product ID: ', v_product_id);
-        END IF;
+            IF v_available_quantity < v_order_quantity THEN
+                ROLLBACK;
+                SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = CONCAT('Insufficient stock for product ID: ', v_product_id);
+            END IF;
 
-        -- Calculate total price
-        SET v_total_price = v_base_price * v_order_quantity;
+            -- Calculate total price
+            SET v_total_price = v_base_price * v_order_quantity;
 
-        -- Insert order details
-        INSERT INTO order_details (order_id, product_id, color_name, order_quantity, base_price_at_order, total_price_at_order)
-        VALUES (v_order_id, v_product_id, v_color_name, v_order_quantity, v_base_price, v_total_price);
+            -- Insert order details
+            INSERT INTO order_details (
+                order_id, product_id, customization_id, charm_id, charm_name, variant_name, variant_url, order_quantity, base_price_at_order, total_price_at_order
+            ) VALUES (
+                v_order_id, v_product_id, v_customization_id, v_charm_id, v_charm_name, v_variant_name, v_variant_url, v_order_quantity, v_base_price, v_total_price
+            );
 
-        -- Update product stock
-        UPDATE products
-        SET available_quantity = available_quantity - v_order_quantity
-        WHERE product_id = v_product_id;
-    END LOOP;
+            -- Update product stock
+            UPDATE products
+            SET available_quantity = available_quantity - v_order_quantity
+            WHERE product_id = v_product_id;
+        END LOOP;
 
-    CLOSE cart_cursor;
+        CLOSE cart_cursor;
 
     COMMIT;
 END $$
@@ -220,11 +238,9 @@ CREATE PROCEDURE update_buyer(
 )
 BEGIN
     DECLARE v_user_id INT;
-    DECLARE v_buyer_id INT;
     
     START TRANSACTION;
 		SELECT user_id INTO v_user_id FROM users WHERE username = p_username;
-		SELECT buyer_id INTO v_buyer_id FROM buyers WHERE user_id = v_user_id;
 
 		UPDATE users
 		SET first_name = p_first_name, last_name = p_last_name
@@ -232,7 +248,7 @@ BEGIN
 
 		UPDATE buyers
 		SET email = p_email, phone_number = p_phone_number
-		WHERE buyer_id = v_buyer_id;
+		WHERE user_id = v_user_id;
 
 		UPDATE addresses
 		SET country = p_country,
@@ -240,7 +256,7 @@ BEGIN
 			barangay = p_barangay,
 			house_number = p_house_number,
 			postal_code = p_postal_code
-		WHERE buyer_id = v_buyer_id;
+		WHERE user_id = v_user_id;
     COMMIT;
 END$$
 
@@ -250,7 +266,6 @@ CREATE PROCEDURE modify_product(
     IN p_product_id INT,
     IN p_product_category_name TEXT,
     IN p_product_name VARCHAR(100),
-    IN p_product_color VARCHAR(50),
     IN p_available_quantity INT,
     IN p_base_price DECIMAL(19,4),
 )
@@ -272,7 +287,7 @@ BEGIN
         SET category_id = fk_category_id,
             product_name = p_product_name,
             available_quantity = p_available_quantity,
-            base_price = p_base_price,
+            base_price = p_base_price
         WHERE product_id = p_product_id;
     COMMIT;
 END$$
@@ -294,9 +309,9 @@ BEGIN
         p.product_name AS name,
         p.base_price,
         p.available_quantity,
-        (SELECT image_url FROM product_colors 
-         WHERE product_id = p.product_id 
-         ORDER BY color_id ASC LIMIT 1) AS image
+        (SELECT image_url FROM product_variants 
+        WHERE product_id = p.product_id 
+        ORDER BY variant_id ASC LIMIT 1) AS image
     FROM products p
     WHERE
         (p_search IS NULL OR p.product_name LIKE CONCAT('%', p_search, '%'))
@@ -324,7 +339,7 @@ BEGIN
         pc.category_name, 
         p.product_name, 
         p.available_quantity, 
-        p.base_price,
+        p.base_price
     FROM products p
     LEFT JOIN product_categories pc ON p.category_id = pc.category_id
     WHERE p.product_id = p_product_id
