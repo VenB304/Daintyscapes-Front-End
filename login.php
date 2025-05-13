@@ -1,18 +1,18 @@
 <?php
 session_start();
-include_once 'includes/db.php'; // Include the database connection
+include_once '../daintyscapes/includes/db.php'; // Include the database connection
 
 // Redirect logged-in users based on their role
 if (isset($_SESSION['role'])) {
     switch ($_SESSION['role']) {
         case 'buyer':
-            header("Location: /pages/buyer/catalog.php");
+            header("Location: ../daintyscapes/pages/buyer/catalog.php");
             exit();
         case 'seller':
-            header("Location: /pages/seller/dashboard.php");
+            header("Location: ../daintyscapes/pages/seller/products.php");
             exit();
         case 'admin':
-            header("Location: /pages/admin/sellers.php");
+            header("Location: ../daintyscapes/pages/admin/buyers.php");
             exit();
     }
 }
@@ -41,13 +41,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             // Redirect based on user role
             switch ($user['role']) {
                 case 'buyer':
-                    header("Location: /pages/buyer/catalog.php");
+                    header("Location: ../daintyscapes/pages/buyer/catalog.php");
                     exit();
                 case 'seller':
-                    header("Location: /pages/seller/dashboard.php");
+                    header("Location: ../daintyscapes/pages/seller/products.php");
                     exit();
                 case 'admin':
-                    header("Location: /pages/admin/buyers.php");
+                    header("Location: ../daintyscapes/pages/admin/buyers.php");
                     exit();
             }
         } else {
@@ -59,7 +59,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 
-<?php include('includes/header.php'); ?>
+<?php include('../daintyscapes/includes/header.php'); ?>
+
+<head>
+    <link rel="stylesheet" href="../../daintyscapes/assets/css/styles.css">
+</head>
 
 <div class="login-container">
     <h1>Login</h1>

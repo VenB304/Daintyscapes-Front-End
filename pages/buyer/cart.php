@@ -44,6 +44,10 @@ if (isset($_GET['remove'])) {
 $total = 0;
 ?>
 
+<head>
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+
 <div class="page-container">
     <h2>Your Cart</h2>
 

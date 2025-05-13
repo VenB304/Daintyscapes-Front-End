@@ -1,7 +1,7 @@
 <?php
 session_start();
-include('includes/header.php');
-include('includes/db.php'); // Include the database connection
+include('../daintyscapes/includes/header.php');
+include('../daintyscapes/includes/db.php'); // Include the database connection
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Collect user inputs
@@ -62,21 +62,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
+
 // Redirect logged-in users based on their role
 if (isset($_SESSION['role'])) {
     switch ($_SESSION['role']) {
         case 'buyer':
-            header("Location: /daintyscapes/pages/buyer/catalog.php");
+            header("Location: ../daintyscapes/pages/buyer/catalog.php");
             exit();
         case 'seller':
-            header("Location: /daintyscapes/pages/seller/dashboard.php");
+            header("Location: ../daintyscapes/pages/seller/dashboard.php");
             exit();
         case 'admin':
-            header("Location: /daintyscapes/pages/admin/buyers.php");
+            header("Location: ../daintyscapes/pages/admin/buyers.php");
             exit();
     }
 }
 ?>
+
+<head>
+    <link rel="stylesheet" href="../../daintyscapes/assets/css/styles.css">
+</head>
 
 <div class="register-container">
     <h1>Register</h1>

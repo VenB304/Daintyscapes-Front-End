@@ -78,6 +78,11 @@ while ($row = $result->fetch_assoc()) {
 $stmt->close();
 ?>
 
+
+<head>
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+</head>
+
 <div class="page-container">
     <h1>Orders for Your Products</h1>
     <?php if (empty($orders)): ?>
