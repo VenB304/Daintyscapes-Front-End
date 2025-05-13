@@ -94,7 +94,7 @@ CREATE TABLE order_details (
     product_id INT NOT NULL,
     customization_id INT,
     charm_id INT,
-    charm_name VARCHAR(30) NOT NULL,
+    charm_name VARCHAR(30),
     variant_name VARCHAR(50) NOT NULL,
     variant_url VARCHAR(255) NOT NULL,
     order_quantity INT NOT NULL,
