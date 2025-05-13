@@ -88,8 +88,15 @@ $total = 0;
     <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
 
+
+
 <div class="page-container">
     <h2>Your Cart</h2>
+
+    <?php if (!empty($_SESSION['cart_error'])): ?>
+        <div class="error-message" style="color:red;"><?= htmlspecialchars($_SESSION['cart_error']) ?></div>
+        <?php unset($_SESSION['cart_error']); ?>
+    <?php endif; ?>
 
     <?php if (empty($cart)): ?>
         <p>Your cart is empty.</p>
