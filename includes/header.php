@@ -16,7 +16,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 <header class="main-header">
     <div class="logo">
-        <a href="/daintyscapes/index.php">Daintyscapes</a>
+        <a href="../../index.php">Daintyscapes</a>
     </div>
 
     <nav class="nav-links">
@@ -47,10 +47,6 @@ if (session_status() === PHP_SESSION_NONE) {
 
             <a href="../../logout.php">Logout</a>
 
-        <?php else: ?>
-            <a href="/index.php">Home</a>
-            <a href="/login.php">Login</a>
-            <a href="/register.php">Register</a>
         <?php endif; ?>
     </nav>
 </header>

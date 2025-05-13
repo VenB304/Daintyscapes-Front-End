@@ -73,8 +73,13 @@ h1, h2, h3 { text-align: center; }
 .register-container {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 8px;
     margin: 0 auto;
+}
+.auth-form input,
+.auth-form select,
+.auth-form textarea {
+    margin: 0;
 }
 .auth-form label {
     text-align: left;
@@ -86,9 +91,12 @@ input, select, textarea, button {
     border: 1px solid #ccc;
     padding: 10px;
     box-sizing: border-box;
+    margin: 0.25rem;
 }
 input[type="text"], input[type="password"], input[type="email"] {
     width: 100%;
+    margin-left: 0%;
+    margin-right: 0%;
 }
 button {
     background-color: var(--primary);
@@ -131,18 +139,34 @@ button:hover { background-color: var(--primary-dark); }
 }
 .hidden { display: none; }
 
+.form-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(40px);
+    z-index: 0;
+}
+
 /* =========================
    5. Login & Registration
    ========================= */
-.login-container, .register-container {
-    width: 320px;
-    margin: 100px auto;
-    padding: 30px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background-color: var(--container-background);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+.login-container,
+.register-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+    width: 100%;
+    max-width: 380px;
+    background: var(--container-background, #fff);
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    padding: 32px 24px;
     text-align: center;
+    opacity: 1;
+    transition: opacity 0.3s, transform 0.3s;
+    overflow-y: auto;
+    max-height: 90vh;
 }
 .login-container a, .register-container a {
     color: var(--primary);
@@ -152,15 +176,28 @@ button:hover { background-color: var(--primary-dark); }
     text-decoration: underline;
 }
 
+.first-last-name {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    
+}
+.first-last-name input {
+    flex: 1 1 0;
+    margin-bottom: 0;
+}
+
 /* =========================
    6. Landing Page
    ========================= */
+
 .landing-container {
     text-align: center;
     margin: 100px auto;
     padding: 20px;
     width: 80%;
     max-width: 600px;
+    animation: fadeInUp 1s ease;
 }
 .landing-container h1 { font-size: 36px; margin-bottom: 20px; }
 .landing-container p { font-size: 18px; margin-bottom: 30px; }
@@ -172,6 +209,58 @@ button:hover { background-color: var(--primary-dark); }
     text-decoration: none;
     border-radius: 5px;
     font-size: 18px;
+}
+.getting-started {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    position: relative;
+}
+
+/* =========================
+       POPOVER & MODAL
+   ========================= */
+
+.login-container,
+.register-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+    width: 100%;
+    max-width: 380px;
+    background: var(--container-background, #fff);
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    padding: 32px 24px;
+    text-align: center;
+    opacity: 1;
+    transition: opacity 0.3s, transform 0.3s;
+}
+.register-container input,
+.login-container input {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.form-hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -40%);
+    z-index: -1;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 1000;
+    display: none;
+}
+.modal-overlay.active {
+    display: block;
 }
 
 /* =========================
@@ -587,3 +676,14 @@ button:hover { background-color: var(--primary-dark); }
 }
 
 /* Universal button style for both <a> and <button> */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
