@@ -74,8 +74,8 @@ CREATE TABLE customizations (
 CREATE TABLE charms (
     charm_id INT PRIMARY KEY AUTO_INCREMENT,
     charm_name VARCHAR(30) NOT NULL,
-    charm_base_price DECIMAL(19,4) NOT NULL
-    charm_image_url VARCHAR(255) NOT NULL,
+    charm_base_price DECIMAL(19,4) NOT NULL,
+    charm_image_url VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE customization_charms (

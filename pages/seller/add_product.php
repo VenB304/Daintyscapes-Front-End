@@ -27,24 +27,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($stmt->execute()) {
         // Get the new product_id
-        $result = $conn->query("SELECT LAST_INSERT_ID() AS id");
+        $result = $stmt->get_result();
         $row = $result->fetch_assoc();
-        $product_id = $row['id'];
+        $product_id = $row['product_id'];
+        
+        // Clear any remaining results from the connection
+        while ($conn->more_results() && $conn->next_result()) { 
+            $conn->store_result();
+        }
 
-        // Insert colors and images
+        // Now you can safely call another procedure or query
         if (!empty($_POST['colors']) && !empty($_POST['color_images'])) {
-            $color_stmt = $conn->prepare("INSERT INTO product_colors (product_id, color_name, image_url) VALUES (?, ?, ?)");
+            $variant_stmt = $conn->prepare("CALL add_product_variant(?, ?, ?)");
             foreach ($_POST['colors'] as $i => $color) {
                 $color_name = trim($color);
                 $color_image = trim($_POST['color_images'][$i]);
-                $color_stmt->bind_param("iss", $product_id, $color_name, $color_image);
-                $color_stmt->execute();
+                $variant_stmt->bind_param("iss", $product_id, $color_name, $color_image);
+                $variant_stmt->execute();
             }
-            $color_stmt->close();
+            $variant_stmt->close();
         }
         $success = "Product added successfully!";
     } else {
-        $error = "Failed to add product.";
+    $error = "Failed to add product.";
     }
     $stmt->close();
 }
