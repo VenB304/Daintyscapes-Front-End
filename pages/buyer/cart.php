@@ -36,13 +36,13 @@ if (!empty($cart)) {
             $products[$row['product_id']] = $row;
         }
         // Fetch all colors for these products
-        $color_stmt = $conn->prepare("SELECT product_id, color_name, image_url FROM product_colors WHERE product_id IN ($ids)");
-        $color_stmt->execute();
-        $color_res = $color_stmt->get_result();
-        while ($row = $color_res->fetch_assoc()) {
-            $colors[$row['product_id'] . '|' . $row['color_name']] = $row;
-        }
-        $color_stmt->close();
+        $color_stmt = $conn->prepare("SELECT product_id, variant_name AS color_name, image_url FROM product_variants WHERE product_id IN ($ids)");
+    $color_stmt->execute();
+    $color_res = $color_stmt->get_result();
+    while ($row = $color_res->fetch_assoc()) {
+        $colors[$row['product_id'] . '|' . $row['color_name']] = $row;
+    }
+    $color_stmt->close();
     }
 }
 
@@ -114,12 +114,23 @@ $total = 0;
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($cart as $key => $qty):
-                    $parts = explode('|', $key, 2);
-                    if (count($parts) < 2) continue;
-                    list($productId, $colorName) = $parts;
+                <?php
+                    foreach ($cart as $key => $qty):
+                    $parts = explode('|', $key);
+                    // Assign variables for clarity
+                    list(
+                        $productId,
+                        $colorName,
+                        $charm,
+                        $charm_x,
+                        $charm_y,
+                        $engraving_option,
+                        $engraving_name,
+                        $engraving_color
+                    ) = array_pad($parts, 8, '');
+
                     $product = $products[$productId] ?? null;
-                    $color = $colors[$key] ?? null;
+                    $color = $colors[$productId . '|' . $colorName] ?? null;
                     if (!$product || !$color) continue;
                     $img = $color['image_url'] ?: '/daintyscapes/assets/img/default-product.png';
                     $maxStock = $product['available_quantity'];
@@ -141,6 +152,21 @@ $total = 0;
                         <td>₱<?= number_format($subtotal, 2) ?></td>
                         <td><a href="?remove=<?= urlencode($key) ?>" class="remove-btn">Remove</a></td>
                     </tr>
+                    <?php if ($charm || $engraving_option === 'include'): ?>
+                    <tr>
+                        <td colspan="7" style="background:#fafafa;">
+                            <?php if ($charm): ?>
+                                <strong>Charm:</strong> <?= htmlspecialchars($charm) ?> (Position: X <?= (int)$charm_x ?>, Y <?= (int)$charm_y ?>)
+                                <br>
+                            <?php endif; ?>
+                            <?php if ($engraving_option === 'include'): ?>
+                                <strong>Engraving:</strong>
+                                <?= htmlspecialchars($engraving_name) ?>
+                                <span style="display:inline-block;width:16px;height:16px;background:<?= htmlspecialchars($engraving_color) ?>;vertical-align:middle;border:1px solid #ccc;margin-left:4px;" title="Engraving Color"></span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php endif; ?>
                 <?php endforeach; ?>
             </tbody>
         </table>

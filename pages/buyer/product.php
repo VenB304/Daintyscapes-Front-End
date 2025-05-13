@@ -39,7 +39,7 @@ $stmt->close();
 $charm_images = [];
 $charm_stmt = $conn->query("SELECT charm_name, charm_image_url FROM charms");
 while ($row = $charm_stmt->fetch_assoc()) {
-    $charm_images[$row['charm_name']] = $row['image_url'];
+    $charm_images[$row['charm_name']] = $row['charm_image_url'];
 }
 ?>
 
@@ -97,9 +97,18 @@ while ($row = $charm_stmt->fetch_assoc()) {
                     <option value="include">Yes</option>
                 </select>
             </div>
+
             <div class="customization-row" id="engraving-fields" style="display:none;">
-                <label>Name: <input type="text" id="engraving-name" name="engraving_name" maxlength="10" placeholder="Max 10 chars"></label>
+                <label>
+                    Name: <input type="text" id="engraving-name" name="engraving_name" maxlength="10" placeholder="Max 10 chars" style="margin-right:8px;">
+                    <select id="engraving-color" name="engraving_color" style="margin-left:8px;">
+                        <option value="#e9d7b9" style="background:#e9d7b9;color:#000;">Beige</option>
+                        <option value="#7b4a1e" style="background:#7b4a1e;color:#fff;">Brown</option>
+                    </select>
+                </label>
             </div>
+
+            
 
             <form method="POST" action="add_to_cart.php" class="add-to-cart-form" style="margin-top:20px;">
                 <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
@@ -109,6 +118,7 @@ while ($row = $charm_stmt->fetch_assoc()) {
                 <input type="hidden" name="charm_y" id="hidden-charm-y" value="0">
                 <input type="hidden" name="engraving_option" id="hidden-engraving-option" value="none">
                 <input type="hidden" name="engraving_name" id="hidden-engraving-name" value="">
+                <input type="hidden" name="engraving_color" id="hidden-engraving-color" value="#000000">
                 <div class="quantity-control" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
                     <label for="quantity" style="margin:0;">Quantity:</label>
                     <button type="button" onclick="changeQuantity(-1)" style="width:32px;">−</button>
@@ -231,4 +241,13 @@ document.getElementById('engraving-option').addEventListener('change', handleEng
 document.getElementById('engraving-name').addEventListener('input', function() {
     document.getElementById('hidden-engraving-name').value = this.value;
 });
+
+document.getElementById('engraving-color').addEventListener('change', function() {
+    document.getElementById('hidden-engraving-color').value = this.value;
+});
+window.addEventListener('DOMContentLoaded', function() {
+    var color = document.getElementById('engraving-color').value;
+    document.getElementById('hidden-engraving-color').value = color;
+});
+
 </script>
