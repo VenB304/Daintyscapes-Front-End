@@ -86,9 +86,9 @@ while ($row = $result->fetch_assoc()) {
         <label>Product Name</label>
         <input type="text" name="name" required>
         <div id="color-section">
-            <label>Colors & Images</label>
+            <label>Variants</label>
             <div class="color-row">
-                <input type="text" name="colors[]" placeholder="Color Name" required>
+                <input type="text" name="colors[]" placeholder="Variant Name" required>
                 <input type="text" name="color_images[]" placeholder="Image URL" required>
                 <button type="button" onclick="addColorRow()">+</button>
             </div>
@@ -118,7 +118,7 @@ function addColorRow() {
     var row = document.createElement('div');
     row.className = 'color-row';
     row.innerHTML = `
-        <input type="text" name="colors[]" placeholder="Color Name" required>
+        <input type="text" name="colors[]" placeholder="Variant Name" required>
         <input type="text" name="color_images[]" placeholder="Image URL" required>
         <button type="button" onclick="this.parentNode.remove()">-</button>
     `;

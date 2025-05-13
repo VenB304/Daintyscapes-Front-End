@@ -24,9 +24,9 @@ if (!$product) {
     exit();
 }
 
-// Fetch colors for this product
+// Fetch variants for this product
 $colors = [];
-$stmt = $conn->prepare("SELECT color_name, image_url FROM product_colors WHERE product_id = ?");
+$stmt = $conn->prepare("SELECT variant_name AS color_name, image_url FROM product_variants WHERE product_id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $res = $stmt->get_result();
@@ -37,7 +37,7 @@ $stmt->close();
 
 // Fetch charms from the database
 $charm_images = [];
-$charm_stmt = $conn->query("SELECT charm_name, image_url FROM charms");
+$charm_stmt = $conn->query("SELECT charm_name, charm_image_url FROM charms");
 while ($row = $charm_stmt->fetch_assoc()) {
     $charm_images[$row['charm_name']] = $row['image_url'];
 }
