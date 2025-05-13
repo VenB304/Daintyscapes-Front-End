@@ -49,7 +49,7 @@ CREATE PROCEDURE add_product(
     IN p_product_category_name TEXT,
     IN p_product_name VARCHAR(100),
     IN p_available_quantity INT,
-    IN p_base_price DECIMAL(19,4),
+    IN p_base_price DECIMAL(19,4)
 )
 BEGIN
     DECLARE fk_category_id INT;
@@ -136,89 +136,34 @@ END $$
 
 -- ----------------------------------------------------------
 
-CREATE PROCEDURE checkout_order(
-    IN p_buyer_id INT
+CREATE PROCEDURE add_order_detail(
+    IN p_order_id INT,
+    IN p_product_id INT,
+    IN p_color_name VARCHAR(50),
+    IN p_order_quantity INT,
+    IN p_base_price DECIMAL(19,4),
+    IN p_total_price DECIMAL(19,4)
 )
 BEGIN
-    DECLARE v_status_id INT;
-    DECLARE v_order_id INT;
-    DECLARE v_product_id INT;
-    DECLARE v_customization_id INT;
-    DECLARE v_charm_id INT;
-    DECLARE v_charm_name VARCHAR(30);
-    DECLARE v_variant_name VARCHAR(50);
-    DECLARE v_variant_url VARCHAR(255);
-    DECLARE v_order_quantity INT;
-    DECLARE v_base_price DECIMAL(19,4);
-    DECLARE v_total_price DECIMAL(19,4);
-    DECLARE v_available_quantity INT;
-    DECLARE done INT DEFAULT 0;
+    INSERT INTO order_details (
+        order_id, product_id, variant_name, order_quantity, base_price_at_order, total_price_at_order, charm_name, variant_url
+    ) VALUES (
+        p_order_id, p_product_id, p_color_name, p_order_quantity, p_base_price, p_total_price, '', ''
+    );
+    -- You can add more params for charm_name, variant_url if needed
+END$$
 
-    -- Get status_id for 'Processing'
-    SELECT status_id INTO v_status_id
-    FROM order_status
-    WHERE status_name = 'Processing'
-    LIMIT 1;
+-- ----------------------------------------------------------
 
-    IF v_status_id IS NULL THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Order status "Processing" not found.';
-    END IF;
-
-    START TRANSACTION;
-
-        -- Insert order
-        INSERT INTO orders (buyer_id, status_id, order_date)
-        VALUES (p_buyer_id, v_status_id, NOW());
-        SET v_order_id = LAST_INSERT_ID();
-
-        -- Cursor for cart items
-        DECLARE cart_cursor CURSOR FOR
-            SELECT product_id, customization_id, charm_id, charm_name, variant_name, variant_url, order_quantity
-            FROM temp_cart;
-
-        DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
-
-        OPEN cart_cursor;
-
-        read_loop: LOOP
-            FETCH cart_cursor INTO v_product_id, v_customization_id, v_charm_id, v_charm_name, v_variant_name, v_variant_url, v_order_quantity;
-
-            IF done THEN
-                LEAVE read_loop;
-            END IF;
-
-            -- Get price and stock
-            SELECT available_quantity, base_price INTO v_available_quantity, v_base_price
-            FROM products
-            WHERE product_id = v_product_id;
-
-            IF v_available_quantity < v_order_quantity THEN
-                ROLLBACK;
-                SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = CONCAT('Insufficient stock for product ID: ', v_product_id);
-            END IF;
-
-            -- Calculate total price
-            SET v_total_price = v_base_price * v_order_quantity;
-
-            -- Insert order details
-            INSERT INTO order_details (
-                order_id, product_id, customization_id, charm_id, charm_name, variant_name, variant_url, order_quantity, base_price_at_order, total_price_at_order
-            ) VALUES (
-                v_order_id, v_product_id, v_customization_id, v_charm_id, v_charm_name, v_variant_name, v_variant_url, v_order_quantity, v_base_price, v_total_price
-            );
-
-            -- Update product stock
-            UPDATE products
-            SET available_quantity = available_quantity - v_order_quantity
-            WHERE product_id = v_product_id;
-        END LOOP;
-
-        CLOSE cart_cursor;
-
-    COMMIT;
-END $$
+CREATE PROCEDURE create_order(
+    IN p_buyer_id INT,
+    IN p_status_id INT
+)
+BEGIN
+    INSERT INTO orders (buyer_id, status_id, order_date)
+    VALUES (p_buyer_id, p_status_id, NOW());
+    SELECT LAST_INSERT_ID() AS order_id;
+END$$
 
 -- ----------------------------------------------------------
 
@@ -267,7 +212,7 @@ CREATE PROCEDURE modify_product(
     IN p_product_category_name TEXT,
     IN p_product_name VARCHAR(100),
     IN p_available_quantity INT,
-    IN p_base_price DECIMAL(19,4),
+    IN p_base_price DECIMAL(19,4)
 )
 BEGIN
     DECLARE fk_category_id INT;

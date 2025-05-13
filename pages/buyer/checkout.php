@@ -68,13 +68,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty(
         }
     }
     if ($invalid) {
-        // Set an error message in session and redirect to cart
         $_SESSION['cart_error'] = "The quantity for '{$invalid_product}' exceeds available stock. Please adjust your cart.";
         header("Location: cart.php");
         exit();
     }
-
-    
 
     if ($buyer_id) {
         // Get status_id for "Processing"
@@ -84,22 +81,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty(
         $stmt->bind_result($status_id);
         $stmt->fetch();
         $stmt->close();
-        
+
         if (!$status_id) {
-            // Handle error: status not found
             echo "<p>Error: Order status not found.</p>";
             exit();
         }
 
-        // Insert order with status_id
-        $stmt = $conn->prepare("INSERT INTO orders (buyer_id, status_id, order_date) VALUES (?, ?, NOW())");
+        // Call create_order procedure
+        $stmt = $conn->prepare("CALL create_order(?, ?)");
         $stmt->bind_param("ii", $buyer_id, $status_id);
         $stmt->execute();
-        $order_id = $stmt->insert_id;
+        $result = $stmt->get_result();
+        $order_row = $result->fetch_assoc();
+        $order_id = $order_row['order_id'];
         $stmt->close();
 
-        // Insert order details
-        $stmt = $conn->prepare("INSERT INTO order_details (order_id, product_id, color_name, order_quantity, base_price_at_order, total_price_at_order) VALUES (?, ?, ?, ?, ?, ?)");
+        // Insert order details using add_order_detail procedure
         foreach ($cart as $key => $qty) {
             $parts = explode('|', $key, 2);
             if (count($parts) < 2) continue;
@@ -115,8 +112,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty(
 
             $total_price = $base_price * $qty;
 
-            $stmt->bind_param("iisidd", $order_id, $productId, $colorName, $qty, $base_price, $total_price);
-            $stmt->execute();
+            $detail_stmt = $conn->prepare("CALL add_order_detail(?, ?, ?, ?, ?, ?)");
+            $detail_stmt->bind_param("iisidd", $order_id, $productId, $colorName, $qty, $base_price, $total_price);
+            $detail_stmt->execute();
+            $detail_stmt->close();
 
             // Reduce available quantity for the product
             $update_stmt = $conn->prepare("UPDATE products SET available_quantity = available_quantity - ? WHERE product_id = ?");
@@ -124,7 +123,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty(
             $update_stmt->execute();
             $update_stmt->close();
         }
-        $stmt->close();
 
         // Clear user-specific cart
         setcookie($cart_cookie, '', time() - 3600, '/');
