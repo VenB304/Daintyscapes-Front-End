@@ -35,7 +35,7 @@ if (session_status() === PHP_SESSION_NONE) {
                     <?php break; ?>
                 
                 <?php case 'admin': ?>
-                    <a href="../../pages/admin/management.php">Managment</a>
+                    <a href="../../pages/admin/management.php">Management</a>
                     <a href="../../pages/admin/buyers.php">Buyers</a>
                     <?php break; ?>
                 
