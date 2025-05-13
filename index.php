@@ -65,61 +65,96 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $showLogin = true;
         }
     } elseif ($form_type === 'register') {
-        // REGISTER
-        $first_name         = trim($_POST['first_name']);
-        $last_name          = trim($_POST['last_name']);
-        $username           = trim($_POST['username']);
-        $password           = trim($_POST['password']);
-        $confirm_password   = trim($_POST['confirm_password']);
-        $email              = trim($_POST['email']);
-        $phone_number       = trim($_POST['phone_number']);
-        $country            = trim($_POST['country']);
-        $city               = trim($_POST['city']);
-        $barangay           = trim($_POST['barangay']);
-        $house_number       = trim($_POST['house_number']);
-        $postal_code        = trim($_POST['postal_code']);
 
-        if ($password !== $confirm_password) {
+        $username        = $_POST['username'] ?? '';
+        $password        = $_POST['password'] ?? '';
+        $confirm_password= $_POST['confirm_password'] ?? '';
+        $first_name      = $_POST['first_name'] ?? '';
+        $last_name       = $_POST['last_name'] ?? '';
+        $email           = $_POST['email'] ?? '';
+        $phone_number    = $_POST['phone_number'] ?? '';
+        $country         = $_POST['country'] ?? '';
+        $city            = $_POST['city'] ?? '';
+        $barangay        = $_POST['barangay'] ?? '';
+        $house_number    = $_POST['house_number'] ?? '';
+        $postal_code     = $_POST['postal_code'] ?? '';
+        // REGISTER
+        if (!preg_match('/^\+[1-9][0-9]{9,14}$/', $phone_number)) {
+            $register_error = "Please enter a valid international phone number (e.g., +1234567890).";
+            $showRegister = true;
+        } elseif ($password !== $confirm_password) {
             $register_error = "Passwords do not match!";
             $showRegister = true;
         } else {
+            // Check for duplicate username, email, or phone number
             $statement = $conn->prepare("SELECT user_id FROM users WHERE username = ?");
             $statement->bind_param("s", $username);
             $statement->execute();
             $statement->store_result();
-
             if ($statement->num_rows > 0) {
                 $register_error = "Username already exists. Please choose another.";
                 $showRegister = true;
             } else {
-                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                $statement = $conn->prepare("CALL add_buyer(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $statement->bind_param(
-                    "sssssssssss",
-                    $first_name,
-                    $last_name,
-                    $username,
-                    $hashed_password,
-                    $email,
-                    $phone_number,
-                    $country,
-                    $city,
-                    $barangay,
-                    $house_number,
-                    $postal_code
-                );
-                if ($statement->execute()) {
-                    $register_success = "Registration successful! Please login.";
-                    $showLogin = true;
-                } else {
-                    $register_error = "An error occurred while registering. Please try again later.";
+                $statement->close();
+                // Check email
+                $statement = $conn->prepare("SELECT user_id FROM buyers WHERE email = ?");
+                $statement->bind_param("s", $email);
+                $statement->execute();
+                $statement->store_result();
+                if ($statement->num_rows > 0) {
+                    $register_error = "Email already exists. Please use another.";
                     $showRegister = true;
+                } else {
+                    $statement->close();
+                    // Check phone number
+                    $statement = $conn->prepare("SELECT user_id FROM buyers WHERE phone_number = ?");
+                    $statement->bind_param("s", $phone_number);
+                    $statement->execute();
+                    $statement->store_result();
+                    if ($statement->num_rows > 0) {
+                        $register_error = "Phone number already exists. Please use another.";
+                        $showRegister = true;
+                    } else {
+                        $statement->close();
+                        // All unique, proceed with registration
+                        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                        $statement = $conn->prepare("CALL add_buyer(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                        $statement->bind_param(
+                            "sssssssssss",
+                            $first_name,
+                            $last_name,
+                            $username,
+                            $hashed_password,
+                            $email,
+                            $phone_number,
+                            $country,
+                            $city,
+                            $barangay,
+                            $house_number,
+                            $postal_code
+                        );
+                        if ($statement->execute()) {
+                            $register_success = "Registration successful! Please login.";
+                            $showLogin = true;
+                        } else {
+                            $register_error = "An error occurred while registering. Please try again later.";
+                            $showRegister = true;
+                        }
+                    }
                 }
             }
             $statement->close();
         }
     }
 }
+
+$err_username = $err_email = $err_phone = '';
+if ($register_error) {
+    if (str_contains($register_error, 'Username')) $err_username = 'input-error';
+    if (str_contains($register_error, 'Email')) $err_email = 'input-error';
+    if (str_contains($register_error, 'Phone')) $err_phone = 'input-error';
+}
+
 ?>
 
 <head>
@@ -144,21 +179,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <?php if ($register_success) echo "<p class='success-message'>$register_success</p>"; ?>
         <form method="POST" action="index.php">
             <input type="hidden" name="form_type" value="register">
-            
             <div class="first-last-name">
-                <input type="text" name="first_name" placeholder="First Name" required>
-                <input type="text" name="last_name" placeholder="Last Name" required>
+                <input type="text" name="first_name" placeholder="First Name" required
+                    value="<?= htmlspecialchars($_POST['first_name'] ?? '') ?>">
+                <input type="text" name="last_name" placeholder="Last Name" required
+                    value="<?= htmlspecialchars($_POST['last_name'] ?? '') ?>">
             </div>
-            <input type="text"      name="username"         placeholder="Username"         required>
+            <input type="text" name="username" placeholder="Username" required pattern="^[a-zA-Z0-9_-]{4,16}$"
+                title="4-16 characters: letters, numbers, underscores (_) or hyphens (-). No spaces."
+                value="<?= htmlspecialchars($_POST['username'] ?? '') ?>" class="<?= $err_username ?>">
             <input type="password"  name="password"         placeholder="Password"         required>
             <input type="password"  name="confirm_password" placeholder="Confirm Password" required>
-            <input type="email"     name="email"            placeholder="Email"            required>
-            <input type="text"      name="phone_number"     placeholder="Phone Number"     required>
-            <input type="text"      name="country"          placeholder="Country"          required>
-            <input type="text"      name="city"             placeholder="City"             required>
-            <input type="text"      name="barangay"         placeholder="Barangay"         required>
-            <input type="text"      name="house_number"     placeholder="House Number"     required>
-            <input type="text"      name="postal_code"      placeholder="Postal Code"      required>
+            <input type="email"     name="email"            placeholder="email@example.com" required
+                value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" class="<?= $err_email ?>">
+            <input type="tel" name="phone_number" placeholder="+1234567890" required pattern="^\+[1-9][0-9]{9,14}$"
+                title="Enter a valid international phone number with + and country code"
+                value="<?= htmlspecialchars($_POST['phone_number'] ?? '') ?>" class="<?= $err_phone ?>">
+            <input type="text"      name="country"          placeholder="Country"          required value="<?= htmlspecialchars($_POST['country'] ?? '') ?>">
+            <input type="text"      name="city"             placeholder="City"             required value="<?= htmlspecialchars($_POST['city'] ?? '') ?>">
+            <input type="text"      name="barangay"         placeholder="Barangay"         required value="<?= htmlspecialchars($_POST['barangay'] ?? '') ?>">
+            <input type="text"      name="house_number"     placeholder="House Number"     required value="<?= htmlspecialchars($_POST['house_number'] ?? '') ?>">
+            <input type="text"      name="postal_code"      placeholder="Postal Code"      required value="<?= htmlspecialchars($_POST['postal_code'] ?? '') ?>">
             <button type="submit">Register</button>
             <p>Already have an account? <a href="#" onclick="showLogin(event)">Login</a></p>
         </form>
@@ -216,6 +257,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         showLogin();
     <?php endif; ?>
 });
+
+document.querySelector('input[name="username"]').addEventListener('keydown', function(e) {
+  if (e.key === ' ') e.preventDefault();
+});
+
+
+
 </script>
     
 

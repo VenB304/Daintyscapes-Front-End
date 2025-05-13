@@ -94,7 +94,7 @@ input, select, textarea, button {
     box-sizing: border-box;
     margin: 0.25rem;
 }
-input[type="text"], input[type="password"], input[type="email"] {
+input[type="text"], input[type="password"], input[type="email"], input[type="tel"] {
     width: 100%;
     margin-left: 0%;
     margin-right: 0%;
@@ -186,6 +186,11 @@ button:hover { background-color: var(--primary-dark); }
 .first-last-name input {
     flex: 1 1 0;
     margin-bottom: 0;
+}
+
+.input-error {
+    border: 2px solid var(--danger, #d9534f) !important;
+    background: #fff6f6 !important;
 }
 
 /* =========================
