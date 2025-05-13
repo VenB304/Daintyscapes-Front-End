@@ -24,7 +24,7 @@ if (!$product) {
     exit();
 }
 
-// Fetch colors for this product (now includes stock)
+// Fetch colors for this product
 $colors = [];
 $stmt = $conn->prepare("SELECT color_name, image_url FROM product_colors WHERE product_id = ?");
 $stmt->bind_param("i", $id);
@@ -34,6 +34,13 @@ while ($row = $res->fetch_assoc()) {
     $colors[] = $row;
 }
 $stmt->close();
+
+// Fetch charms from the database
+$charm_images = [];
+$charm_stmt = $conn->query("SELECT charm_name, image_url FROM charms");
+while ($row = $charm_stmt->fetch_assoc()) {
+    $charm_images[$row['charm_name']] = $row['image_url'];
+}
 ?>
 
 <head>
@@ -42,8 +49,9 @@ $stmt->close();
 
 <div class="page-container">
     <div class="product-detail-container">
-        <div class="product-image-frame">
-            <img id="product-image" src="<?= htmlspecialchars($colors[0]['image_url'] ?? '') ?>" alt="Product Image">
+        <div class="product-image-frame" style="position:relative;width:300px;height:300px;">
+            <img id="product-image" src="<?= htmlspecialchars($colors[0]['image_url'] ?? '') ?>" alt="Product Image" style="width:100%;height:100%;object-fit:contain;">
+            <img id="charm-overlay" src="" alt="Charm Overlay" style="display:none;position:absolute;left:0;top:0;width:150px;height:150px;pointer-events:auto;cursor:move;">
         </div>
         <div class="product-info">
             <h1 class="product-title"><?= htmlspecialchars($product['name']) ?></h1>
@@ -54,8 +62,8 @@ $stmt->close();
                 echo $firstStock > 0 ? "In Stock: $firstStock" : "Out of Stock";
                 ?>
             </p>
-            <div class="customization-options">
-                <label for="color">Choose a color:</label>
+           <div class="customization-row">
+                <label for="color" style="min-width:110px;">Choose a color:</label>
                 <select id="color" name="color" onchange="updateProductImage()" <?= count($colors) === 1 ? 'disabled' : '' ?> required>
                     <?php foreach ($colors as $i => $c): ?>
                         <option value="<?= htmlspecialchars($c['color_name']) ?>"
@@ -66,20 +74,41 @@ $stmt->close();
                         </option>
                     <?php endforeach; ?>
                 </select>
+            </div>
 
-                <label for="charm">Choose a charm:</label>
+            <div class="customization-row">
+                <label for="charm" style="min-width:110px;">Choose a charm:</label>
                 <select name="charm" id="charm" required>
                     <option value="">No Charm</option>
-                    <option value="Star">Star</option>
-                    <option value="Moon">Moon</option>
-                    <option value="Heart">Heart</option>
+                    <?php foreach ($charm_images as $charm => $img): ?>
+                        <option value="<?= htmlspecialchars($charm) ?>" data-img="<?= htmlspecialchars($img) ?>"><?= htmlspecialchars($charm) ?></option>
+                    <?php endforeach; ?>
                 </select>
+            </div>
+            <div class="customization-row" id="charm-position-fields" style="display:none;">
+                <label>X: <input type="number" id="charm-x" name="charm_x" value="0" style="width:60px;"></label>
+                <label>Y: <input type="number" id="charm-y" name="charm_y" value="0" style="width:60px;"></label>
+            </div>
+
+            <div class="customization-row">
+                <label for="engraving-option" style="min-width:110px;">Use Engraving:</label>
+                <select id="engraving-option" name="engraving_option" onchange="handleEngravingOption()">
+                    <option value="none">No</option>
+                    <option value="include">Yes</option>
+                </select>
+            </div>
+            <div class="customization-row" id="engraving-fields" style="display:none;">
+                <label>Name: <input type="text" id="engraving-name" name="engraving_name" maxlength="10" placeholder="Max 10 chars"></label>
             </div>
 
             <form method="POST" action="add_to_cart.php" class="add-to-cart-form" style="margin-top:20px;">
                 <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
                 <input type="hidden" name="color" id="hidden-color" value="<?= htmlspecialchars($colors[0]['color_name'] ?? '') ?>">
                 <input type="hidden" name="charm" id="hidden-charm" value="">
+                <input type="hidden" name="charm_x" id="hidden-charm-x" value="0">
+                <input type="hidden" name="charm_y" id="hidden-charm-y" value="0">
+                <input type="hidden" name="engraving_option" id="hidden-engraving-option" value="none">
+                <input type="hidden" name="engraving_name" id="hidden-engraving-name" value="">
                 <div class="quantity-control" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
                     <label for="quantity" style="margin:0;">Quantity:</label>
                     <button type="button" onclick="changeQuantity(-1)" style="width:32px;">−</button>
@@ -87,9 +116,9 @@ $stmt->close();
                     <button type="button" onclick="changeQuantity(1)" style="width:32px;">+</button>
                     <span id="max-stock-label" style="color:#888;">(Max: <?= (int)($product['stock'] ?? 1) ?>)</span>
                 </div>
-                <?php
-                    $firstStock = (int)($product['stock'] ?? 0);
-                ?>
+
+                
+
                 <?php if ($firstStock > 0): ?>
                     <button type="submit" class="btn add-cart">Add to Cart</button>
                 <?php else: ?>
@@ -102,15 +131,13 @@ $stmt->close();
 
 <script>
 function updateProductImage() {
-    var select          = document.getElementById('color');
-    var img             = document.getElementById('product-image');
-    var selected        = select.options[select.selectedIndex];
-    var imgUrl          = selected.getAttribute('data-img');
-    var stock           = selected.getAttribute('data-stock');
+    var select = document.getElementById('color');
+    var img = document.getElementById('product-image');
+    var selected = select.options[select.selectedIndex];
+    var imgUrl = selected.getAttribute('data-img');
+    var stock = selected.getAttribute('data-stock');
     if (imgUrl) img.src = imgUrl;
-    
     document.getElementById('hidden-color').value = select.value;
-    
     var qtyInput = document.getElementById('quantity');
     var maxLabel = document.getElementById('max-stock-label');
     qtyInput.max = stock;
@@ -130,8 +157,78 @@ function changeQuantity(amount) {
     input.value = val;
 }
 
-// Keep charm selection in hidden input for form
+// Charm overlay logic
 document.getElementById('charm').addEventListener('change', function() {
-    document.getElementById('hidden-charm').value = this.value;
+    var charm = this.value;
+    var overlay = document.getElementById('charm-overlay');
+    var charmImg = this.selectedOptions[0].getAttribute('data-img');
+    if (charm && charmImg) {
+        overlay.src = charmImg;
+        overlay.style.display = 'block';
+        document.getElementById('charm-position-fields').style.display = 'inline-block';
+    } else {
+        overlay.style.display = 'none';
+        document.getElementById('charm-position-fields').style.display = 'none';
+    }
+    document.getElementById('hidden-charm').value = charm;
+});
+
+// Drag logic for overlay
+(function() {
+    var overlay = document.getElementById('charm-overlay');
+    var frame = document.querySelector('.product-image-frame');
+    var dragging = false, offsetX = 0, offsetY = 0;
+
+    overlay.addEventListener('mousedown', function(e) {
+        dragging = true;
+        offsetX = e.offsetX;
+        offsetY = e.offsetY;
+    });
+    document.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var rect = frame.getBoundingClientRect();
+        var x = e.clientX - rect.left - offsetX;
+        var y = e.clientY - rect.top - offsetY;
+        // Clamp to frame
+        x = Math.max(0, Math.min(x, frame.offsetWidth - overlay.offsetWidth));
+        y = Math.max(0, Math.min(y, frame.offsetHeight - overlay.offsetHeight));
+        overlay.style.left = x + 'px';
+        overlay.style.top = y + 'px';
+        document.getElementById('charm-x').value = x;
+        document.getElementById('charm-y').value = y;
+        document.getElementById('hidden-charm-x').value = x;
+        document.getElementById('hidden-charm-y').value = y;
+    });
+    document.addEventListener('mouseup', function() {
+        dragging = false;
+    });
+    // Sync manual input fields
+    document.getElementById('charm-x').addEventListener('input', function() {
+        overlay.style.left = this.value + 'px';
+        document.getElementById('hidden-charm-x').value = this.value;
+    });
+    document.getElementById('charm-y').addEventListener('input', function() {
+        overlay.style.top = this.value + 'px';
+        document.getElementById('hidden-charm-y').value = this.value;
+    });
+})();
+
+function handleEngravingOption() {
+    var opt = document.getElementById('engraving-option').value;
+    var fields = document.getElementById('engraving-fields');
+    var hiddenOpt = document.getElementById('hidden-engraving-option');
+    var hiddenName = document.getElementById('hidden-engraving-name');
+    if (opt === 'include') {
+        fields.style.display = 'inline-block';
+    } else {
+        fields.style.display = 'none';
+        hiddenName.value = '';
+        document.getElementById('engraving-name').value = '';
+    }
+    hiddenOpt.value = opt;
+}
+document.getElementById('engraving-option').addEventListener('change', handleEngravingOption);
+document.getElementById('engraving-name').addEventListener('input', function() {
+    document.getElementById('hidden-engraving-name').value = this.value;
 });
 </script>
