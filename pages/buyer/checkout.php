@@ -48,14 +48,33 @@ if (!empty($cart)) {
 $total = 0;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty($cart)) {
-    // Get buyer_id from session/username
-    $username = $_SESSION['username'];
-    $stmt = $conn->prepare("SELECT b.buyer_id FROM buyers b JOIN users u ON b.user_id = u.user_id WHERE u.username = ?");
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $stmt->bind_result($buyer_id);
-    $stmt->fetch();
-    $stmt->close();
+    // 1. Check available quantities before proceeding
+    $invalid = false;
+    $invalid_product = '';
+    foreach ($cart as $key => $qty) {
+        $parts = explode('|', $key, 2);
+        if (count($parts) < 2) continue;
+        list($productId, $colorName) = $parts;
+        $stmt = $conn->prepare("SELECT available_quantity, product_name FROM products WHERE product_id = ?");
+        $stmt->bind_param("i", $productId);
+        $stmt->execute();
+        $stmt->bind_result($available, $product_name);
+        $stmt->fetch();
+        $stmt->close();
+        if ($qty > $available) {
+            $invalid = true;
+            $invalid_product = $product_name;
+            break;
+        }
+    }
+    if ($invalid) {
+        // Set an error message in session and redirect to cart
+        $_SESSION['cart_error'] = "The quantity for '{$invalid_product}' exceeds available stock. Please adjust your cart.";
+        header("Location: cart.php");
+        exit();
+    }
+
+    
 
     if ($buyer_id) {
         // Get status_id for "Processing"
