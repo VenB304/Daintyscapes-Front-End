@@ -399,7 +399,6 @@ BEGIN
     )
     ORDER BY o.order_date DESC, o.order_id DESC;    
 END$$
-DELIMITER ;
 
 -- ----------------------------------------------------------
 -- ----------------------------------------------------------
@@ -493,7 +492,6 @@ BEGIN
 		INSERT INTO users (username, password_hash, role)
 		VALUES (p_username, p_password_hash, 'seller');
 
-		-- Get the last inserted ID
 		SET @uid = LAST_INSERT_ID();
 
 		INSERT INTO seller (user_id)
