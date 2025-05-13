@@ -47,95 +47,93 @@ while ($row = $charm_stmt->fetch_assoc()) {
     <link rel="stylesheet" href="../../assets/css/styles.css">
 </head>
 
-<div class="page-container">
-    <div class="product-detail-container">
-        <div class="product-image-frame" style="position:relative;width:300px;height:300px;">
-            <img id="product-image" src="<?= htmlspecialchars($colors[0]['image_url'] ?? '') ?>" alt="Product Image" style="width:100%;height:100%;object-fit:contain;">
-            <img id="charm-overlay" src="" alt="Charm Overlay" style="display:none;position:absolute;left:0;top:0;width:150px;height:150px;pointer-events:auto;cursor:move;">
+<div class="product-detail-container">
+    <div class="product-image-frame">
+        <img id="product-image" src="<?= htmlspecialchars($colors[0]['image_url'] ?? '') ?>" alt="Product Image">
+        <img id="charm-overlay" src="" alt="Charm Overlay" style="display:none;position:absolute;left:0;top:0;width:150px;height:150px;pointer-events:auto;cursor:move;">
+    </div>
+    <div class="product-info">
+        <h1 class="product-title"><?= htmlspecialchars($product['name']) ?></h1>
+        <p class="product-price">₱<?= number_format($product['price'], 2) ?></p>
+        <p class="product-stock">
+            <?php
+            $firstStock = (int)($product['stock'] ?? 0);
+            echo $firstStock > 0 ? "In Stock: $firstStock" : "Out of Stock";
+            ?>
+        </p>
+        <div class="customization-row">
+            <label for="color" style="min-width:110px;">Choose a color:</label>
+            <select id="color" name="color" onchange="updateProductImage()" <?= count($colors) === 1 ? 'disabled' : '' ?> required>
+                <?php foreach ($colors as $i => $c): ?>
+                    <option value="<?= htmlspecialchars($c['color_name']) ?>"
+                            data-img="<?= htmlspecialchars($c['image_url']) ?>"
+                            data-stock="<?= (int)$product['stock'] ?>"
+                            <?= $i === 0 ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($c['color_name']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </div>
-        <div class="product-info">
-            <h1 class="product-title"><?= htmlspecialchars($product['name']) ?></h1>
-            <p class="product-price">₱<?= number_format($product['price'], 2) ?></p>
-            <p class="product-stock">
-                <?php
-                $firstStock = (int)($product['stock'] ?? 0);
-                echo $firstStock > 0 ? "In Stock: $firstStock" : "Out of Stock";
-                ?>
-            </p>
-           <div class="customization-row">
-                <label for="color" style="min-width:110px;">Choose a color:</label>
-                <select id="color" name="color" onchange="updateProductImage()" <?= count($colors) === 1 ? 'disabled' : '' ?> required>
-                    <?php foreach ($colors as $i => $c): ?>
-                        <option value="<?= htmlspecialchars($c['color_name']) ?>"
-                                data-img="<?= htmlspecialchars($c['image_url']) ?>"
-                                data-stock="<?= (int)$product['stock'] ?>"
-                                <?= $i === 0 ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($c['color_name']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
 
-            <div class="customization-row">
-                <label for="charm" style="min-width:110px;">Choose a charm:</label>
-                <select name="charm" id="charm" required>
-                    <option value="">No Charm</option>
-                    <?php foreach ($charm_images as $charm => $img): ?>
-                        <option value="<?= htmlspecialchars($charm) ?>" data-img="<?= htmlspecialchars($img) ?>"><?= htmlspecialchars($charm) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div class="customization-row" id="charm-position-fields" style="display:none;">
-                <label>X: <input type="number" id="charm-x" name="charm_x" value="0" style="width:60px;"></label>
-                <label>Y: <input type="number" id="charm-y" name="charm_y" value="0" style="width:60px;"></label>
-            </div>
+        <div class="customization-row">
+            <label for="charm" style="min-width:110px;">Choose a charm:</label>
+            <select name="charm" id="charm" required>
+                <option value="">No Charm</option>
+                <?php foreach ($charm_images as $charm => $img): ?>
+                    <option value="<?= htmlspecialchars($charm) ?>" data-img="<?= htmlspecialchars($img) ?>"><?= htmlspecialchars($charm) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="customization-row" id="charm-position-fields" style="display:none;">
+            <label>X: <input type="number" id="charm-x" name="charm_x" value="0" style="width:60px;"></label>
+            <label>Y: <input type="number" id="charm-y" name="charm_y" value="0" style="width:60px;"></label>
+        </div>
 
-            <div class="customization-row">
-                <label for="engraving-option" style="min-width:110px;">Use Engraving:</label>
-                <select id="engraving-option" name="engraving_option" onchange="handleEngravingOption()">
-                    <option value="none">No</option>
-                    <option value="include">Yes</option>
-                </select>
-            </div>
+        <div class="customization-row">
+            <label for="engraving-option" style="min-width:110px;">Use Engraving:</label>
+            <select id="engraving-option" name="engraving_option" onchange="handleEngravingOption()">
+                <option value="none">No</option>
+                <option value="include">Yes</option>
+            </select>
+        </div>
 
-            <div class="customization-row" id="engraving-fields" style="display:none;">
-                <label>
-                    Name: <input type="text" id="engraving-name" name="engraving_name" maxlength="10" placeholder="Max 10 chars" style="margin-right:8px;">
-                    <select id="engraving-color" name="engraving_color" style="margin-left:8px;">
-                        <option value="#e9d7b9" style="background:#e9d7b9;color:#000;">Beige</option>
-                        <option value="#7b4a1e" style="background:#7b4a1e;color:#fff;">Brown</option>
-                    </select>
-                </label>
+        <div class="customization-row" id="engraving-fields" style="display:none;">
+            <label>
+                Name: <input type="text" id="engraving-name" name="engraving_name" maxlength="10" placeholder="Max 10 chars" style="margin-right:8px;">
+                <select id="engraving-color" name="engraving_color" style="margin-left:8px;">
+                    <option value="#e9d7b9" style="background:#e9d7b9;color:#000;">Beige</option>
+                    <option value="#7b4a1e" style="background:#7b4a1e;color:#fff;">Brown</option>
+                </select>
+            </label>
+        </div>
+
+        
+
+        <form method="POST" action="add_to_cart.php" class="add-to-cart-form" style="margin-top:20px;">
+            <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
+            <input type="hidden" name="color" id="hidden-color" value="<?= htmlspecialchars($colors[0]['color_name'] ?? '') ?>">
+            <input type="hidden" name="charm" id="hidden-charm" value="">
+            <input type="hidden" name="charm_x" id="hidden-charm-x" value="0">
+            <input type="hidden" name="charm_y" id="hidden-charm-y" value="0">
+            <input type="hidden" name="engraving_option" id="hidden-engraving-option" value="none">
+            <input type="hidden" name="engraving_name" id="hidden-engraving-name" value="">
+            <input type="hidden" name="engraving_color" id="hidden-engraving-color" value="#000000">
+            <div class="quantity-control" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                <label for="quantity" style="margin:0;">Quantity:</label>
+                <button type="button" onclick="changeQuantity(-1)" style="width:32px;">−</button>
+                <input type="number" id="quantity" name="quantity" value="1" min="1" max="<?= (int)($product['stock'] ?? 1) ?>" required style="width:60px;text-align:center;">
+                <button type="button" onclick="changeQuantity(1)" style="width:32px;">+</button>
+                <span id="max-stock-label" style="color:#888;">(Max: <?= (int)($product['stock'] ?? 1) ?>)</span>
             </div>
 
             
 
-            <form method="POST" action="add_to_cart.php" class="add-to-cart-form" style="margin-top:20px;">
-                <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
-                <input type="hidden" name="color" id="hidden-color" value="<?= htmlspecialchars($colors[0]['color_name'] ?? '') ?>">
-                <input type="hidden" name="charm" id="hidden-charm" value="">
-                <input type="hidden" name="charm_x" id="hidden-charm-x" value="0">
-                <input type="hidden" name="charm_y" id="hidden-charm-y" value="0">
-                <input type="hidden" name="engraving_option" id="hidden-engraving-option" value="none">
-                <input type="hidden" name="engraving_name" id="hidden-engraving-name" value="">
-                <input type="hidden" name="engraving_color" id="hidden-engraving-color" value="#000000">
-                <div class="quantity-control" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-                    <label for="quantity" style="margin:0;">Quantity:</label>
-                    <button type="button" onclick="changeQuantity(-1)" style="width:32px;">−</button>
-                    <input type="number" id="quantity" name="quantity" value="1" min="1" max="<?= (int)($product['stock'] ?? 1) ?>" required style="width:60px;text-align:center;">
-                    <button type="button" onclick="changeQuantity(1)" style="width:32px;">+</button>
-                    <span id="max-stock-label" style="color:#888;">(Max: <?= (int)($product['stock'] ?? 1) ?>)</span>
-                </div>
-
-                
-
-                <?php if ($firstStock > 0): ?>
-                    <button type="submit" class="btn add-cart">Add to Cart</button>
-                <?php else: ?>
-                    <button type="button" class="btn add-cart" disabled style="background:#aaa;cursor:not-allowed;">Out of Stock</button>
-                <?php endif; ?>
-            </form>
-        </div>
+            <?php if ($firstStock > 0): ?>
+                <button type="submit" class="btn add-cart">Add to Cart</button>
+            <?php else: ?>
+                <button type="button" class="btn add-cart" disabled style="background:#aaa;cursor:not-allowed;">Out of Stock</button>
+            <?php endif; ?>
+        </form>
     </div>
 </div>
 
