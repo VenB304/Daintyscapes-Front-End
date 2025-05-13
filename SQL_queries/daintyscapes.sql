@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 12, 2025 at 11:23 AM
+-- Generation Time: May 13, 2025 at 04:19 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -25,27 +25,27 @@ DELIMITER $$
 --
 -- Procedures
 --
-CREATE DEFINER=`root`@`localhost` PROCEDURE `add_buyer` (IN `p_username` VARCHAR(50), IN `p_password_hash` VARCHAR(100), IN `p_email` VARCHAR(50), IN `p_phone_number` VARCHAR(17), IN `p_country` VARCHAR(50), IN `p_city` VARCHAR(50), IN `p_barangay` VARCHAR(50), IN `p_house_number` VARCHAR(20), IN `p_postal_code` VARCHAR(10))   BEGIN
-	DECLARE buyer_uid INT;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `add_buyer` (IN `p_first_name` VARCHAR(50), IN `p_last_name` VARCHAR(50), IN `p_username` VARCHAR(50), IN `p_password_hash` VARCHAR(100), IN `p_email` VARCHAR(50), IN `p_phone_number` VARCHAR(17), IN `p_country` VARCHAR(50), IN `p_city` VARCHAR(50), IN `p_barangay` VARCHAR(50), IN `p_house_number` VARCHAR(20), IN `p_postal_code` VARCHAR(10))   BEGIN
+    DECLARE v_user_id INT;
+    DECLARE v_buyer_id INT;
 
-	START TRANSACTION;
+    START TRANSACTION;
 
-	INSERT INTO users (username, password_hash, role)
-	VALUES (p_username, p_password_hash, 'buyer');
+    INSERT INTO users (first_name, last_name, username, password_hash, role)
+    VALUES (p_first_name, p_last_name, p_username, p_password_hash, 'buyer');
+    SET v_user_id = LAST_INSERT_ID();
 
-	-- Get the last inserted ID into local variable
-	SET buyer_uid = LAST_INSERT_ID();
-    
-	INSERT INTO buyers (user_id, email, phone_number)
-	VALUES (buyer_uid, p_email, p_phone_number);
+    INSERT INTO buyers (user_id, email, phone_number)
+    VALUES (v_user_id, p_email, p_phone_number);
+    SET v_buyer_id = LAST_INSERT_ID();
 
-	INSERT INTO addresses (buyer_id, country, city, barangay, house_number, postal_code)
-    VALUES (buyer_uid, p_country, p_city, p_barangay, p_house_number, p_postal_code);
+    INSERT INTO addresses (buyer_id, country, city, barangay, house_number, postal_code)
+    VALUES (v_buyer_id, p_country, p_city, p_barangay, p_house_number, p_postal_code);
 
-	COMMIT;
+    COMMIT;
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `add_product` (IN `p_product_category_name` TEXT, IN `p_product_name` VARCHAR(100), IN `p_product_color` VARCHAR(50), IN `p_available_quantity` INT, IN `p_base_price` DECIMAL(19,4), IN `p_image_url` VARCHAR(255))   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `add_product` (IN `p_product_category_name` TEXT, IN `p_product_name` VARCHAR(100), IN `p_available_quantity` INT, IN `p_base_price` DECIMAL(19,4))   BEGIN
     DECLARE fk_category_id INT;
 
     START TRANSACTION;
@@ -55,13 +55,12 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_product` (IN `p_product_categor
         LIMIT 1;
 
         IF fk_category_id IS NULL THEN
-            -- Optionally, insert the category if it doesn't exist
             INSERT INTO product_categories (category_name) VALUES (p_product_category_name);
             SET fk_category_id = LAST_INSERT_ID();
         END IF;
 
-        INSERT INTO products (category_id, product_name, product_color, available_quantity, base_price, image_url)
-        VALUES (fk_category_id, p_product_name, p_product_color, p_available_quantity, p_base_price, p_image_url);
+        INSERT INTO products (category_id, product_name, available_quantity, base_price)
+        VALUES (fk_category_id, p_product_name, p_available_quantity, p_base_price);
 
     COMMIT;
 END$$
@@ -83,7 +82,100 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_seller` (IN `p_username` VARCHA
 	COMMIT;
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `modify_product` (IN `p_product_id` INT, IN `p_product_category_name` TEXT, IN `p_product_name` VARCHAR(100), IN `p_product_color` VARCHAR(50), IN `p_available_quantity` INT, IN `p_base_price` DECIMAL(19,4), IN `p_image_url` VARCHAR(255))   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `delete_buyer` (IN `p_buyer_id` INT)   BEGIN
+    DECLARE v_user_id INT;
+
+    START TRANSACTION;
+        -- Get user_id for this buyer
+        SELECT user_id INTO v_user_id FROM buyers WHERE buyer_id = p_buyer_id;
+
+        -- Delete from addresses first (by buyer_id)
+        DELETE FROM addresses WHERE buyer_id = p_buyer_id;
+
+        -- Now delete from buyers
+        DELETE FROM buyers WHERE buyer_id = p_buyer_id;
+
+        -- Optionally, delete from users if you want to fully remove the user
+        DELETE FROM users WHERE user_id = v_user_id;
+    COMMIT;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_buyer_orders` (IN `p_username` VARCHAR(50))   BEGIN
+    -- In your get_buyer_orders procedure:
+SELECT
+    o.order_id,
+    o.order_date AS date,
+    os.status_name AS status,
+    od.product_id,
+    p.product_name AS name,
+    od.color_name,
+    (SELECT image_url FROM product_colors WHERE product_id = p.product_id AND color_name = od.color_name LIMIT 1) AS image,
+    od.order_quantity AS quantity,
+    p.base_price AS price
+FROM orders o
+JOIN order_details od ON o.order_id = od.order_id
+JOIN products p ON od.product_id = p.product_id
+LEFT JOIN order_status os ON o.status_id = os.status_id
+WHERE o.buyer_id = (SELECT b.buyer_id FROM buyers b JOIN users u ON b.user_id = u.user_id WHERE u.username = p_username)
+ORDER BY o.order_date DESC, o.order_id DESC;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_buyer_profile_by_username` (IN `p_username` VARCHAR(50))   BEGIN
+    SELECT 
+        u.username, 
+        u.first_name,
+        u.last_name,
+        b.email, 
+        b.phone_number, 
+        a.country, 
+        a.city, 
+        a.postal_code, 
+        a.barangay, 
+        a.house_number
+    FROM users u
+    JOIN buyers b ON u.user_id = b.user_id
+    LEFT JOIN addresses a ON b.buyer_id = a.buyer_id
+    WHERE u.username = p_username
+    LIMIT 1;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_products` (IN `p_search` VARCHAR(100), IN `p_min_price` DECIMAL(19,4), IN `p_max_price` DECIMAL(19,4), IN `p_sort` VARCHAR(20), IN `p_category_id` INT)   BEGIN
+    SELECT 
+        p.product_id AS id,
+        p.product_name AS name,
+        p.base_price,
+        p.available_quantity,
+        (SELECT image_url FROM product_colors WHERE product_id = p.product_id ORDER BY color_id ASC LIMIT 1) AS image
+    FROM products p
+    WHERE
+        (p_search IS NULL OR p.product_name LIKE CONCAT('%', p_search, '%'))
+        AND (p_min_price IS NULL OR p.base_price >= p_min_price)
+        AND (p_max_price IS NULL OR p.base_price <= p_max_price)
+        AND (p_category_id IS NULL OR p.category_id = p_category_id)
+    ORDER BY
+        CASE 
+            WHEN p_sort = 'price_asc' THEN p.base_price
+            WHEN p_sort = 'price_desc' THEN -p.base_price
+            WHEN p_sort = 'oldest' THEN p.product_id
+            ELSE -p.product_id
+        END ASC,
+        p.product_id DESC;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_product_by_id` (IN `p_product_id` INT)   BEGIN
+    SELECT 
+        p.product_id, 
+        pc.category_name, 
+        p.product_name, 
+        p.available_quantity, 
+        p.base_price
+    FROM products p
+    LEFT JOIN product_categories pc ON p.category_id = pc.category_id
+    WHERE p.product_id = p_product_id
+    LIMIT 1;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `modify_product` (IN `p_product_id` INT, IN `p_product_category_name` TEXT, IN `p_product_name` VARCHAR(100), IN `p_product_color` VARCHAR(50), IN `p_available_quantity` INT, IN `p_base_price` DECIMAL(19,4))   BEGIN
     DECLARE fk_category_id INT;
 
     START TRANSACTION;
@@ -100,44 +192,45 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `modify_product` (IN `p_product_id` 
         UPDATE products
         SET category_id = fk_category_id,
             product_name = p_product_name,
-            product_color = p_product_color,
             available_quantity = p_available_quantity,
-            base_price = p_base_price,
-            image_url = p_image_url
+            base_price = p_base_price
         WHERE product_id = p_product_id;
 
     COMMIT;
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `update_buyer` (IN `p_username` VARCHAR(50), IN `p_email` VARCHAR(50), IN `p_phone_number` VARCHAR(17), IN `p_country` VARCHAR(50), IN `p_city` VARCHAR(50), IN `p_barangay` VARCHAR(50), IN `p_house_number` VARCHAR(20), IN `p_postal_code` VARCHAR(10))   BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `update_buyer` (IN `p_username` VARCHAR(50), IN `p_first_name` VARCHAR(50), IN `p_last_name` VARCHAR(50), IN `p_email` VARCHAR(50), IN `p_phone_number` VARCHAR(17), IN `p_country` VARCHAR(50), IN `p_city` VARCHAR(50), IN `p_barangay` VARCHAR(50), IN `p_house_number` VARCHAR(20), IN `p_postal_code` VARCHAR(10))   BEGIN
     DECLARE v_user_id INT;
+    DECLARE v_buyer_id INT;
 
-    START TRANSACTION;
-
-    -- Get user_id from username
+    -- Get user_id
     SELECT user_id INTO v_user_id FROM users WHERE username = p_username;
+    -- Get buyer_id
+    SELECT buyer_id INTO v_buyer_id FROM buyers WHERE user_id = v_user_id;
+
+    -- Update users table
+    UPDATE users
+    SET first_name = p_first_name, last_name = p_last_name
+    WHERE user_id = v_user_id;
 
     -- Update buyers table
     UPDATE buyers
-    SET email = p_email,
-        phone_number = p_phone_number
-    WHERE user_id = v_user_id;
+    SET email = p_email, phone_number = p_phone_number
+    WHERE buyer_id = v_buyer_id;
 
     -- Update addresses table (if exists, else insert)
-    IF EXISTS (SELECT 1 FROM addresses WHERE buyer_id = v_user_id) THEN
+    IF EXISTS (SELECT 1 FROM addresses WHERE buyer_id = v_buyer_id) THEN
         UPDATE addresses
         SET country = p_country,
             city = p_city,
             barangay = p_barangay,
             house_number = p_house_number,
             postal_code = p_postal_code
-        WHERE buyer_id = v_user_id;
+        WHERE buyer_id = v_buyer_id;
     ELSE
         INSERT INTO addresses (buyer_id, country, city, barangay, house_number, postal_code)
-        VALUES (v_user_id, p_country, p_city, p_barangay, p_house_number, p_postal_code);
+        VALUES (v_buyer_id, p_country, p_city, p_barangay, p_house_number, p_postal_code);
     END IF;
-
-    COMMIT;
 END$$
 
 DELIMITER ;
@@ -163,8 +256,7 @@ CREATE TABLE `addresses` (
 --
 
 INSERT INTO `addresses` (`address_id`, `buyer_id`, `country`, `city`, `barangay`, `house_number`, `postal_code`) VALUES
-(2, 2, 'Philippines', 'Malvar', 'San Pedro 1sad', 'n/a', '4233'),
-(5, 6, 'Philippines', 'Malvar', 'asdf', 'asdf', '4233');
+(1, 1, 'Philippines', 'Malvar', 'San Pedro 1', 'n/a', '4233');
 
 -- --------------------------------------------------------
 
@@ -184,8 +276,7 @@ CREATE TABLE `buyers` (
 --
 
 INSERT INTO `buyers` (`buyer_id`, `user_id`, `email`, `phone_number`) VALUES
-(2, 2, 'tite@gmail.com', '09562672240'),
-(6, 6, 'ventralberry@gmail.com', '09562672241');
+(1, 8, 'ventralberry@gmail.com', '09562672240');
 
 -- --------------------------------------------------------
 
@@ -240,6 +331,16 @@ CREATE TABLE `orders` (
   `order_date` date DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `orders`
+--
+
+INSERT INTO `orders` (`order_id`, `buyer_id`, `status_id`, `order_date`) VALUES
+(1, 1, 8, '2025-05-13'),
+(2, 1, 5, '2025-05-13'),
+(3, 1, 2, '2025-05-13'),
+(4, 1, 2, '2025-05-13');
+
 -- --------------------------------------------------------
 
 --
@@ -250,9 +351,23 @@ CREATE TABLE `order_details` (
   `order_detail_id` int(11) NOT NULL,
   `order_id` int(11) DEFAULT NULL,
   `product_id` int(11) DEFAULT NULL,
+  `color_name` varchar(50) DEFAULT NULL,
   `customization_id` int(11) DEFAULT NULL,
   `order_quantity` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `order_details`
+--
+
+INSERT INTO `order_details` (`order_detail_id`, `order_id`, `product_id`, `color_name`, `customization_id`, `order_quantity`) VALUES
+(4, 2, 2, 'Zombie Hamburglar', NULL, 1),
+(5, 2, 2, 'Birdie Wings', NULL, 1),
+(6, 2, 2, 'Soda Potion', NULL, 1),
+(7, 3, 2, 'Zombie Hamburglar', NULL, 5),
+(8, 3, 2, 'Birdie Wings', NULL, 5),
+(9, 3, 2, 'Soda Potion', NULL, 10),
+(10, 4, 2, 'Zombie Hamburglar', NULL, 103);
 
 -- --------------------------------------------------------
 
@@ -265,6 +380,20 @@ CREATE TABLE `order_status` (
   `status_name` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `order_status`
+--
+
+INSERT INTO `order_status` (`status_id`, `status_name`) VALUES
+(1, 'Order Cancelled'),
+(2, 'Processing'),
+(3, 'Pending'),
+(4, 'Shipped'),
+(5, 'Delivered'),
+(6, 'Cancelled'),
+(7, 'Hotdog hotdog'),
+(8, 'Hotdog hotdogsdf');
+
 -- --------------------------------------------------------
 
 --
@@ -275,20 +404,16 @@ CREATE TABLE `products` (
   `product_id` int(11) NOT NULL,
   `category_id` int(11) DEFAULT NULL,
   `product_name` varchar(100) DEFAULT NULL,
-  `product_color` varchar(50) DEFAULT NULL,
   `available_quantity` int(11) DEFAULT NULL,
-  `base_price` decimal(19,4) DEFAULT NULL,
-  `image_url` varchar(1024) NOT NULL
+  `base_price` decimal(19,4) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `products`
 --
 
-INSERT INTO `products` (`product_id`, `category_id`, `product_name`, `product_color`, `available_quantity`, `base_price`, `image_url`) VALUES
-(2, 3, 'Zombie Hamburglar', 'Green', 123, 123.0000, 'https://venb.ddns.net/gallery/IMG_20250512_010923_069.jpg'),
-(4, 3, 'Birdie Wings', 'Yellow', 123, 123.0000, 'https://venb.ddns.net/gallery/received_708802188248720.jpeg'),
-(5, 3, 'Soda Potion', 'Orange', 123, 123.0000, 'https://venb.ddns.net/gallery/received_1100308605190148.jpeg');
+INSERT INTO `products` (`product_id`, `category_id`, `product_name`, `available_quantity`, `base_price`) VALUES
+(2, 1, 'Mcdo Minecraft Toys', 100, 500.0000);
 
 -- --------------------------------------------------------
 
@@ -306,9 +431,29 @@ CREATE TABLE `product_categories` (
 --
 
 INSERT INTO `product_categories` (`category_id`, `category_name`) VALUES
-(1, 'asdf'),
-(2, 'asdfasdf'),
-(3, 'Toy');
+(1, 'Toy');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `product_colors`
+--
+
+CREATE TABLE `product_colors` (
+  `color_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `color_name` varchar(50) NOT NULL,
+  `image_url` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `product_colors`
+--
+
+INSERT INTO `product_colors` (`color_id`, `product_id`, `color_name`, `image_url`) VALUES
+(19, 2, 'Zombie Hamburglar', 'https://venb.ddns.net/gallery/IMG_20250512_010923_069.jpg'),
+(20, 2, 'Birdie Wings', 'https://venb.ddns.net/gallery/received_708802188248720.jpeg'),
+(21, 2, 'Soda Potion', 'https://venb.ddns.net/gallery/received_1100308605190148.jpeg');
 
 -- --------------------------------------------------------
 
@@ -348,10 +493,9 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`user_id`, `first_name`, `last_name`, `username`, `password_hash`, `role`) VALUES
-(2, NULL, NULL, 'buyer1', '$2y$10$PjJpqjI2l57bvY7OrSWI2O2b3QVRo4jPb3hPFbyKz9QHQnMETD.mG', 'buyer'),
-(5, NULL, NULL, 'admin', '$2y$10$TTjFXRqqiHWg6OMpvtS7ruXU4Fa08XyUxuwLCuT4M626JXfAA7Bgy', 'admin'),
-(6, NULL, NULL, 'buyer2', '$2y$10$q2XG5KK76.2LMB/302dwL.eraWgELn9iUNCRcZjYgHnIv1A/5uPsC', 'buyer'),
-(7, NULL, NULL, 'seller1', '$2y$10$1ZIoLMFC1LbwlYJeTiT.7.U8.xp2HYF33ZOF3HDZMmVizjG5MVAZy', 'seller');
+(5, NULL, NULL, 'admin', '$2y$10$gCiV6UrePI5nqBhPOEqGGOUqzcvYowJ.K06ENsS3IkboVlrMv8NqG', 'admin'),
+(7, NULL, NULL, 'seller1', '$2y$10$1ZIoLMFC1LbwlYJeTiT.7.U8.xp2HYF33ZOF3HDZMmVizjG5MVAZy', 'seller'),
+(8, 'Karl Zyrele', 'Palomo', 'buyer', '$2y$10$20gHDBA3wXSuG.FqYplnYurO39wM7xzdTkKhl2tcnJkI0/4SOoMVW', 'buyer');
 
 --
 -- Indexes for dumped tables
@@ -429,6 +573,13 @@ ALTER TABLE `product_categories`
   ADD PRIMARY KEY (`category_id`);
 
 --
+-- Indexes for table `product_colors`
+--
+ALTER TABLE `product_colors`
+  ADD PRIMARY KEY (`color_id`),
+  ADD KEY `product_id` (`product_id`);
+
+--
 -- Indexes for table `seller`
 --
 ALTER TABLE `seller`
@@ -450,13 +601,13 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `addresses`
 --
 ALTER TABLE `addresses`
-  MODIFY `address_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `address_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `buyers`
 --
 ALTER TABLE `buyers`
-  MODIFY `buyer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `buyer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `charms`
@@ -480,31 +631,37 @@ ALTER TABLE `customization_charms`
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `order_details`
 --
 ALTER TABLE `order_details`
-  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `order_status`
 --
 ALTER TABLE `order_status`
-  MODIFY `status_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `status_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `product_categories`
 --
 ALTER TABLE `product_categories`
-  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `product_colors`
+--
+ALTER TABLE `product_colors`
+  MODIFY `color_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT for table `seller`
@@ -516,7 +673,7 @@ ALTER TABLE `seller`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- Constraints for dumped tables
@@ -555,6 +712,12 @@ ALTER TABLE `order_details`
   ADD CONSTRAINT `order_details_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`),
   ADD CONSTRAINT `order_details_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`),
   ADD CONSTRAINT `order_details_ibfk_3` FOREIGN KEY (`customization_id`) REFERENCES `customizations` (`customization_id`);
+
+--
+-- Constraints for table `product_colors`
+--
+ALTER TABLE `product_colors`
+  ADD CONSTRAINT `product_colors_ibfk_1` FOREIGN KEY (`product_id`) REFERENCES `products` (`product_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `seller`

@@ -15,7 +15,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 <header class="main-header">
     <div class="logo">
-        <a href="../../daintyscapes/index.php">Daintyscapes</a>
+        <a >Daintyscapes</a>
     </div>
 
     <nav class="nav-links">
@@ -35,7 +35,8 @@ if (session_status() === PHP_SESSION_NONE) {
                     <?php break; ?>
                 
                 <?php case 'admin': ?>
-                    <!-- <a href="../../pages/admin/buyers.php">Manage Buyers</a> -->
+                    <a href="../../pages/admin/management.php">Managment</a>
+                    <a href="../../pages/admin/buyers.php">Buyers</a>
                     <?php break; ?>
                 
                 <?php default: ?>

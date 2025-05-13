@@ -21,9 +21,14 @@ while ($row = $catResult->fetch_assoc()) {
     $categories[] = $row;
 }
 
-$query = "SELECT p.product_id AS id, p.product_name AS name, p.base_price, p.available_quantity, p.image_url AS image
-          FROM products p
-          WHERE 1";
+$query = "SELECT 
+    p.product_id AS id, 
+    p.product_name AS name, 
+    p.base_price, 
+    p.available_quantity, 
+    (SELECT image_url FROM product_colors WHERE product_id = p.product_id ORDER BY color_id ASC LIMIT 1) AS image
+FROM products p
+WHERE 1";
 $params = [];
 $types = "";
 
@@ -91,6 +96,12 @@ $stmt->close();
 <div class="page-container">
     <h1>Catalog</h1>
 
+    <?php if (isset($_GET['added']) && $_GET['added'] == 1): ?>
+        <div class="success-message" style="margin-bottom: 16px;">
+            Product added to cart!
+        </div>
+    <?php endif; ?>
+
     <form method="GET" class="catalog-filters">
         <input type="text" name="search" placeholder="Search by name" value="<?= htmlspecialchars($search) ?>">
         <select name="category">
@@ -116,7 +127,10 @@ $stmt->close();
         <?php foreach ($products as $product): ?>
             <div class="product-card">
                 <a href="product.php?id=<?= $product['id'] ?>">
-                    <img src="<?= htmlspecialchars($product['image']) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
+                    <?php
+                        $img = $product['image'] ?: '/daintyscapes/assets/img/default-product.png'; // Use your actual default image path
+                    ?>
+                    <img src="<?= htmlspecialchars($img) ?>" alt="<?= htmlspecialchars($product['name']) ?>">
                     <h3><?= htmlspecialchars($product['name']) ?></h3>
                     <p>Price: ₱<?= number_format($product['base_price'], 2) ?></p>
                     <p>Stock: <?= htmlspecialchars($product['available_quantity']) ?></p>

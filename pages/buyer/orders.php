@@ -13,13 +13,12 @@ $username = $_SESSION['username'] ?? null;
 $orders = [];
 
 if ($username) {
-    // Call the stored procedure to get orders for this buyer
+    // Make sure your procedure returns: order_id, date, status, product_id, name, color_name, image, quantity, base_price_at_order, total_price_at_order
     $stmt = $conn->prepare("CALL get_buyer_orders(?)");
     $stmt->bind_param("s", $username);
     $stmt->execute();
     $result = $stmt->get_result();
 
-    // Group items by order_id
     while ($row = $result->fetch_assoc()) {
         $oid = $row['order_id'];
         if (!isset($orders[$oid])) {
@@ -33,9 +32,11 @@ if ($username) {
         $orders[$oid]['items'][] = [
             'product_id' => $row['product_id'],
             'name' => $row['name'],
-            'image' => $row['image'], // Make sure this is selected in your procedure!
+            'color' => $row['color_name'],
+            'image' => $row['image'],
             'quantity' => $row['quantity'],
-            'price' => $row['price']
+            'base_price_at_order' => $row['base_price_at_order'],
+            'total_price_at_order' => $row['total_price_at_order']
         ];
     }
     $stmt->close();
@@ -63,6 +64,7 @@ if ($username) {
                         <tr>
                             <th>Image</th>
                             <th>Product Name</th>
+                            <th>Color</th>
                             <th>Quantity</th>
                             <th>Price Each</th>
                             <th>Total</th>
@@ -70,16 +72,17 @@ if ($username) {
                     </thead>
                     <tbody>
                         <?php foreach ($order['items'] as $item): 
-                            $subtotal = $item['price'] * $item['quantity'];
+                            $subtotal = $item['total_price_at_order'];
                             $total += $subtotal;
                         ?>
                             <tr>
                                 <td>
-                                    <img src="<?= htmlspecialchars($item['image']) ?>" alt="<?= htmlspecialchars($item['name']) ?>" style="width:60px;height:60px;object-fit:cover;">
+                                    <img src="<?= htmlspecialchars($item['image'] ?: '/daintyscapes/assets/img/default-product.png') ?>" alt="<?= htmlspecialchars($item['name']) ?>" style="width:60px;height:60px;object-fit:cover;">
                                 </td>
                                 <td><?= htmlspecialchars($item['name']) ?></td>
+                                <td><?= htmlspecialchars($item['color']) ?></td>
                                 <td><?= htmlspecialchars($item['quantity']) ?></td>
-                                <td>₱<?= number_format($item['price'], 2) ?></td>
+                                <td>₱<?= number_format($item['base_price_at_order'], 2) ?></td>
                                 <td>₱<?= number_format($subtotal, 2) ?></td>
                             </tr>
                         <?php endforeach; ?>
