@@ -31,9 +31,9 @@ set BACKUP_FILE=%BACKUP_DIR%\daintyscapes_%datetime%.sql
 
 REM Perform the backup
 if "%MYSQL_PASS%"=="" (
-    "C:\xampp\mysql\bin\mysqldump.exe" -u%MYSQL_USER% %MYSQL_DB% > "%BACKUP_FILE%"
+    "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqldump.exe" -u%MYSQL_USER% %MYSQL_DB% > "%BACKUP_FILE%"
 ) else (
-    "C:\xampp\mysql\bin\mysqldump.exe" -u%MYSQL_USER% -p%MYSQL_PASS% %MYSQL_DB% > "%BACKUP_FILE%"
+    "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqldump.exe" -u%MYSQL_USER% -p%MYSQL_PASS% %MYSQL_DB% > "%BACKUP_FILE%"
 )
 
 REM Log the backup
