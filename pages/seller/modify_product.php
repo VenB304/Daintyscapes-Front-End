@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_id'])) {
                 while ($conn->more_results() && $conn->next_result()) { $conn->store_result(); }
             }
         }
-        $color_stmt->close();
+        $variant_stmt->close();
     }
     $quantity = intval($_POST['quantity']);
     $price = floatval($_POST['price']);
