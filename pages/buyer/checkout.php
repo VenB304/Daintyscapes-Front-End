@@ -76,22 +76,21 @@ if (isset($_SESSION['user_id'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty($cart)) {
-    // 1. Check available quantities before proceeding
-    $invalid = false;
-    $invalid_product = '';
+    // 1. Sum all cart quantities per product
+    $product_quantities = [];
     foreach ($cart as $key => $qty) {
         $parts = explode('|', $key);
-        list(
-            $productId,
-            $colorName,
-            $charm,
-            $charm_x,
-            $charm_y,
-            $engraving_option,
-            $engraving_name,
-            $engraving_color
-        ) = array_pad($parts, 8, '');
+        $productId = $parts[0] ?? 0;
+        if (!isset($product_quantities[$productId])) {
+            $product_quantities[$productId] = 0;
+        }
+        $product_quantities[$productId] += $qty;
+    }
 
+    // 2. Check available quantities before proceeding
+    $invalid = false;
+    $invalid_product = '';
+    foreach ($product_quantities as $productId => $total_qty) {
         // Fetch current available quantity and product name
         $stmt = $conn->prepare("SELECT available_quantity, product_name FROM products WHERE product_id = ?");
         $stmt->bind_param("i", $productId);
@@ -99,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty(
         $stmt->bind_result($available, $product_name);
         $stmt->fetch();
         $stmt->close();
-        if ($qty > $available) {
+        if ($total_qty > $available) {
             $invalid = true;
             $invalid_product = $product_name;
             break;
