@@ -50,9 +50,6 @@ while ($row = $charm_stmt->fetch_assoc()) {
         'price' => $row['charm_base_price']
     ];
 }
-
-
-
 ?>
 
 <head>
@@ -129,9 +126,7 @@ while ($row = $charm_stmt->fetch_assoc()) {
             </label>
         </div>
 
-        
-
-        <form method="POST" action="add_to_cart.php" class="add-to-cart-form" style="margin-top:20px;">
+        <form method="POST" action="add_to_cart.php" class="add-to-cart-form" style="margin-top:20px;" id="add-to-cart-form">
             <input type="hidden" name="product_id" value="<?= $product['id'] ?>">
             <input type="hidden" name="color" id="hidden-color" value="<?= htmlspecialchars($colors[0]['color_name'] ?? '') ?>">
             <input type="hidden" name="charm" id="hidden-charm" value="">
@@ -147,9 +142,6 @@ while ($row = $charm_stmt->fetch_assoc()) {
                 <button type="button" onclick="changeQuantity(1)" style="width:32px;">+</button>
                 <span id="max-stock-label" style="color:#888;">(Max: <?= (int)($product['stock'] ?? 1) ?>)</span>
             </div>
-
-            
-
             <?php if ($firstStock > 0): ?>
                 <button type="submit" class="btn add-cart">Add to Cart</button>
             <?php else: ?>
@@ -258,8 +250,11 @@ function handleEngravingOption() {
     hiddenOpt.value = opt;
 }
 document.getElementById('engraving-option').addEventListener('change', handleEngravingOption);
+
 document.getElementById('engraving-name').addEventListener('input', function() {
-    document.getElementById('hidden-engraving-name').value = this.value;
+    var val = this.value.substring(0, 9);
+    this.value = val;
+    document.getElementById('hidden-engraving-name').value = val;
 });
 
 document.getElementById('engraving-color').addEventListener('change', function() {
@@ -285,4 +280,11 @@ document.getElementById('charm').addEventListener('change', function() {
     }
 });
 
+document.getElementById('add-to-cart-form').addEventListener('submit', function(e) {
+    var engraveInput = document.getElementById('engraving-name');
+    if (engraveInput.value.length > 9) {
+        engraveInput.value = engraveInput.value.substring(0, 9);
+        document.getElementById('hidden-engraving-name').value = engraveInput.value;
+    }
+});
 </script>

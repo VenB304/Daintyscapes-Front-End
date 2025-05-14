@@ -150,6 +150,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty(
                 $engraving_color
             ) = array_pad($parts, 8, '');
 
+            $engraving_name = mb_substr(trim($engraving_name), 0, 9);
+
             // Fetch current base price
             $price_stmt = $conn->prepare("SELECT base_price FROM products WHERE product_id = ?");
             $price_stmt->bind_param("i", $productId);
