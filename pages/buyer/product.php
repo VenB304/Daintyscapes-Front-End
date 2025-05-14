@@ -74,7 +74,7 @@ while ($row = $charm_stmt->fetch_assoc()) {
             ?>
         </p>
         <div class="customization-row">
-            <label for="color" style="min-width:110px;">Choose a color:</label>
+            <label for="color" style="min-width:110px;">Choose a variant:</label>
             <select id="color" name="color" onchange="updateProductImage()" <?= count($colors) === 1 ? 'disabled' : '' ?> required>
                 <?php foreach ($colors as $i => $c): ?>
                     <option value="<?= htmlspecialchars($c['color_name']) ?>"
