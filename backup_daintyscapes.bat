@@ -2,12 +2,12 @@
 REM === Automated MySQL Backup for daintyscapes ===
 
 REM Set your MySQL credentials
-set MYSQL_USER=root
-set MYSQL_PASS=
+set MYSQL_USER=venb
+set MYSQL_PASS=$VentralB304
 set MYSQL_DB=daintyscapes
 
 REM Set backup directory
-set BACKUP_DIR=C:\Users\JP\Desktop\KUSOGAKI\gaki_ProgramFiles\XAMPP\htdocs\backups
+set BACKUP_DIR=C:\xampp\htdocs\daintyscapes\daintyscapes
 
 REM Create backup directory if it doesn't exist
 if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%"
@@ -31,9 +31,9 @@ set BACKUP_FILE=%BACKUP_DIR%\daintyscapes_%datetime%.sql
 
 REM Perform the backup
 if "%MYSQL_PASS%"=="" (
-    "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqldump.exe" -u%MYSQL_USER% %MYSQL_DB% > "%BACKUP_FILE%"
+    "C:\xampp\bin\mysql\mysqldump.exe" -u%MYSQL_USER% %MYSQL_DB% > "%BACKUP_FILE%"
 ) else (
-    "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqldump.exe" -u%MYSQL_USER% -p%MYSQL_PASS% %MYSQL_DB% > "%BACKUP_FILE%"
+    "C:\xampp\bin\mysql\mysqldump.exe" -u%MYSQL_USER% -p%MYSQL_PASS% %MYSQL_DB% > "%BACKUP_FILE%"
 )
 
 REM Log the backup
