@@ -59,7 +59,7 @@ while ($row = $charm_stmt->fetch_assoc()) {
 <div class="product-detail-container">
     <div class="product-image-frame">
         <img id="product-image" src="<?= htmlspecialchars($colors[0]['image_url'] ?? '') ?>" alt="Product Image">
-        <img id="charm-overlay" src="" alt="Charm Overlay" style="display:none;position:absolute;left:0;top:0;width:225px;height:225px;pointer-events:auto;cursor:move;">
+        <img id="charm-overlay" src="" alt="Charm Overlay" style="display:none;position:absolute;left:0;top:0;width:20em;height:20em;pointer-events:auto;cursor:move;">
     </div>
     <div class="product-info">
         <h1 class="product-title"><?= htmlspecialchars($product['name']) ?></h1>
@@ -104,8 +104,8 @@ while ($row = $charm_stmt->fetch_assoc()) {
             </select>
         </div>
         <div class="customization-row" id="charm-position-fields" style="display:none;">
-            <label>X: <input type="number" id="charm-x" name="charm_x" value="0" style="width:60px;"></label>
-            <label>Y: <input type="number" id="charm-y" name="charm_y" value="0" style="width:60px;"></label>
+            <label>X: <input type="number" id="charm-x" name="charm_x" value="0" style="width:5rem;"></label>
+            <label>Y: <input type="number" id="charm-y" name="charm_y" value="0" style="width:5rem;"></label>
         </div>
 
         <div class="customization-row">
