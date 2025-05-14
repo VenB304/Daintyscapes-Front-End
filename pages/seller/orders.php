@@ -216,6 +216,7 @@ if ($customization_ids) {
                     name="custom_status"
                     id="custom-status-<?= $order['order_id'] ?>"
                     placeholder="Enter custom status"
+                    maxlength="50"
                     style="margin-left:8px;<?= $is_custom ? '' : 'display:none;' ?>"
                     value="<?= $is_custom ? htmlspecialchars($order['status_name']) : '' ?>">
                 <button type="submit" style="margin-left:8px;">Update Status</button>
