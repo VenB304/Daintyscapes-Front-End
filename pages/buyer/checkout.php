@@ -125,14 +125,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty(
             exit();
         }
 
-        // Create order
-        $stmt = $conn->prepare("INSERT INTO orders (buyer_id, status_id, order_date) VALUES (?, ?, CURDATE())");
+        // Create order and get order_id using procedure
+        $order_id = null;
+        $stmt = $conn->prepare("CALL create_order(?, ?)");
         $stmt->bind_param("ii", $buyer_id, $status_id);
         $stmt->execute();
-        $order_id = $stmt->insert_id;
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            $order_id = $row['order_id'];
+        }
         $stmt->close();
+        $conn->next_result();
 
-        // Insert order details
         foreach ($cart as $key => $qty) {
             $parts = explode('|', $key);
             list(
@@ -173,41 +177,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty(
             // --- Customization logic ---
             $customization_id = null;
             if ($engraving_option === 'include' || $charm) {
-                $cost = 0; // You can set your logic for customization cost
-                $stmt = $conn->prepare("INSERT INTO customizations (buyer_id, customized_name, customized_name_color, customization_cost) VALUES (?, ?, ?, ?)");
+                $cost = 0; // Set your logic for customization cost
+                // Use procedure to add customization and get ID
+                $stmt = $conn->prepare("CALL add_customization(?, ?, ?, ?, @customization_id)");
                 $stmt->bind_param("issd", $buyer_id, $engraving_name, $engraving_color, $cost);
                 $stmt->execute();
-                $customization_id = $stmt->insert_id;
                 $stmt->close();
+                $conn->next_result();
+                $result = $conn->query("SELECT @customization_id AS customization_id");
+                $row = $result->fetch_assoc();
+                $customization_id = $row['customization_id'];
 
-                // Insert into customization_charms if charm is present
                 if ($charm) {
+                    // Get the charm_id from the charms table
                     $charm_id = null;
-                    $stmt = $conn->prepare("SELECT charm_id FROM charms WHERE charm_name = ? LIMIT 1");
-                    $stmt->bind_param("s", $charm);
-                    $stmt->execute();
-                    $stmt->bind_result($charm_id);
-                    $stmt->fetch();
-                    $stmt->close();
+                    $charm_stmt = $conn->prepare("SELECT charm_id FROM charms WHERE charm_name = ? LIMIT 1");
+                    $charm_stmt->bind_param("s", $charm);
+                    $charm_stmt->execute();
+                    $charm_stmt->bind_result($charm_id);
+                    $charm_stmt->fetch();
+                    $charm_stmt->close();
 
                     if ($charm_id) {
-                        $stmt = $conn->prepare("INSERT INTO customization_charms (customization_id, charm_id, x_position, y_position) VALUES (?, ?, ?, ?)");
+                        // Use procedure to add customization charm
+                        $stmt = $conn->prepare("CALL add_customization_charm(?, ?, ?, ?)");
                         $stmt->bind_param("iiii", $customization_id, $charm_id, $charm_x, $charm_y);
                         $stmt->execute();
                         $stmt->close();
+                        $conn->next_result();
                     }
                 }
+            } else {
+                $customization_id = null;
             }
 
-            // Insert order detail with customization_id
-            $detail_stmt = $conn->prepare("INSERT INTO order_details 
-                (order_id, product_id, customization_id, charm_name, variant_name, variant_url, order_quantity, base_price_at_order, total_price_at_order)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $detail_stmt->bind_param(
-                "iiisssidd",
+            // Get charm_id for order_details if charm is present
+            $charm_id = null;
+            if ($charm) {
+                $charm_stmt = $conn->prepare("SELECT charm_id FROM charms WHERE charm_name = ? LIMIT 1");
+                $charm_stmt->bind_param("s", $charm);
+                $charm_stmt->execute();
+                $charm_stmt->bind_result($charm_id);
+                $charm_stmt->fetch();
+                $charm_stmt->close();
+            }
+
+            // Use procedure to add order detail and update stock
+            $stmt = $conn->prepare("CALL add_order_detail(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param(
+                "iiiisssidd",
                 $order_id,
                 $productId,
                 $customization_id,
+                $charm_id,
                 $charm,
                 $colorName,
                 $image_url,
@@ -215,14 +237,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm']) && !empty(
                 $base_price,
                 $total_price
             );
-            $detail_stmt->execute();
-            $detail_stmt->close();
-
-            // Reduce available quantity for the product
-            $update_stmt = $conn->prepare("UPDATE products SET available_quantity = available_quantity - ? WHERE product_id = ?");
-            $update_stmt->bind_param("ii", $qty, $productId);
-            $update_stmt->execute();
-            $update_stmt->close();
+            $stmt->execute();
+            $stmt->close();
+            $conn->next_result();
         }
 
         // Clear user-specific cart

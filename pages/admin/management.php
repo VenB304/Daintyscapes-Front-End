@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_admin'])) {
     $new_password = trim($_POST['admin_password']);
     $hashed = password_hash($new_password, PASSWORD_DEFAULT);
 
-    $stmt = $conn->prepare("UPDATE users SET username = ?, password_hash = ? WHERE user_id = ?");
+    $stmt = $conn->prepare("CALL update_user_credentials(?, ?, ?)");
     $stmt->bind_param("ssi", $new_username, $hashed, $_SESSION['user_id']);
     if ($stmt->execute()) {
         $_SESSION['username'] = $new_username;
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_seller'])) {
     $stmt->close();
 
     if ($seller_user_id) {
-        $stmt = $conn->prepare("UPDATE users SET username = ?, password_hash = ? WHERE user_id = ?");
+        $stmt = $conn->prepare("CALL update_user_credentials(?, ?, ?)");
         $stmt->bind_param("ssi", $new_username, $hashed, $seller_user_id);
         if ($stmt->execute()) {
             $success = "Seller credentials updated!";

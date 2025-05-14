@@ -26,12 +26,13 @@ foreach ($allowed_statuses as $status_name) {
         $statuses[$db_statuses[$status_name]] = $status_name;
     } else {
         // Insert missing status into DB
-        $stmt = $conn->prepare("INSERT INTO order_status (status_name) VALUES (?)");
+        $stmt = $conn->prepare("CALL add_order_status(?, @new_status_id)");
         $stmt->bind_param("s", $status_name);
         $stmt->execute();
-        $new_id = $stmt->insert_id;
         $stmt->close();
-        $statuses[$new_id] = $status_name;
+        $res = $conn->query("SELECT @new_status_id AS status_id");
+        $row = $res->fetch_assoc();
+        $new_id = $row['status_id'];
     }
 }
 
@@ -53,17 +54,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id'])) {
         if ($existing_status_id) {
             $status_id = $existing_status_id;
         } else {
-            $stmt = $conn->prepare("INSERT INTO order_status (status_name) VALUES (?)");
-            $stmt->bind_param("s", $custom_status);
+            $stmt = $conn->prepare("CALL add_order_status(?, @new_status_id)");
+            $stmt->bind_param("s", $custom_status); // Use $custom_status, not $status_name
             $stmt->execute();
-            $status_id = $stmt->insert_id;
             $stmt->close();
+            $res = $conn->query("SELECT @new_status_id AS status_id");
+            $row = $res->fetch_assoc();
+            $status_id = $row['status_id']; // <-- Assign to $status_id!
         }
     }
 
     if ($status_id) {
-        $stmt = $conn->prepare("UPDATE orders SET status_id = ? WHERE order_id = ?");
-        $stmt->bind_param("ii", $status_id, $order_id);
+        $stmt = $conn->prepare("CALL update_order_status(?, ?)");
+        $stmt->bind_param("ii", $order_id, $status_id);
         $stmt->execute();
         $stmt->close();
     }

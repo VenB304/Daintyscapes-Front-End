@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
     // Update the buyer's username and password
-    $stmt = $conn->prepare("UPDATE users INNER JOIN buyers ON users.user_id = buyers.user_id SET users.username = ?, users.password_hash = ? WHERE buyers.buyer_id = ?");
+    $stmt = $conn->prepare("CALL update_buyer_credentials(?, ?, ?)");
     $stmt->bind_param("ssi", $username, $hashedPassword, $buyerId);
 
     if ($stmt->execute()) {
