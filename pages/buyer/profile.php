@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h2>Your Profile</h2>
 
     <?php if (isset($updated)): ?>
-        <p style="color: green;">✅ Profile updated.</p>
+        <p style="color: green; text-align: center;">✅ Profile updated.</p>
     <?php endif; ?>
 
     <form method="POST" class="auth-form" style="max-width: 500px; margin: auto;">
