@@ -3,7 +3,7 @@ REM === Automated MySQL Backup for daintyscapes ===
 
 REM Set your MySQL credentials
 set MYSQL_USER=root
-set MYSQL_PASS=
+set MYSQL_PASS=root
 set MYSQL_DB=daintyscapes
 
 REM Set backup directory
