@@ -64,10 +64,10 @@ if (isset($_GET['success'])) {
     <a href="products.php" class="btn">Back to Products</a>
 
     <?php if ($success): ?>
-        <div class="success"><?= htmlspecialchars($success) ?></div>
+        <div class="success-message"><?= htmlspecialchars($success) ?></div>
     <?php endif; ?>
     <?php if ($error): ?>
-        <div class="error"><?= htmlspecialchars($error) ?></div>
+        <div class="error-message"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
     <div style="margin-bottom: 24px;">
