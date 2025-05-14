@@ -121,7 +121,7 @@ while ($row = $charm_stmt->fetch_assoc()) {
 
         <div class="customization-row" id="engraving-fields" style="display:none;">
             <label>
-                Name: <input type="text" id="engraving-name" name="engraving_name" maxlength="10" placeholder="Max 10 chars" style="margin-right:8px;">
+                Name: <input type="text" id="engraving-name" name="engraving_name" maxlength="9" placeholder="Max 10 chars" style="margin-right:8px;">
                 <select id="engraving-color" name="engraving_color" style="margin-left:8px;">
                     <option value="#e9d7b9" style="background:#e9d7b9;color:#000;">Beige</option>
                     <option value="#7b4a1e" style="background:#7b4a1e;color:#fff;">Brown</option>
