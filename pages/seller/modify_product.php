@@ -45,13 +45,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['product_id'])) {
 
     // Insert all current variants
     if (!empty($_POST['variants']) && !empty($_POST['variant_images'])) {
-        $color_stmt = $conn->prepare("CALL add_product_variant(?, ?, ?)");
+        $variant_stmt = $conn->prepare("CALL add_product_variant(?, ?, ?)");
         foreach ($_POST['variants'] as $i => $color) {
             $variant_name = trim($color);
             $color_image = trim($_POST['variant_images'][$i]);
             if ($variant_name !== '' && $color_image !== '') {
-                $color_stmt->bind_param("iss", $id, $variant_name, $color_image);
-                $color_stmt->execute();
+                $variant_stmt->bind_param("iss", $id, $variant_name, $color_image);
+                $variant_stmt->execute();
                 // Clear any remaining results to avoid "commands out of sync"
                 while ($conn->more_results() && $conn->next_result()) { $conn->store_result(); }
             }

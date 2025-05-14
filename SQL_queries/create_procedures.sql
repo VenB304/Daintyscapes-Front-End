@@ -138,12 +138,13 @@ END $$
 
 CREATE PROCEDURE add_charm(
 	IN p_charm_name VARCHAR(30),
-    IN p_charm_base_price DECIMAL(19,4)
+    IN p_charm_base_price DECIMAL(19,4),
+    IN p_charm_image_url VARCHAR(255)
 )
 BEGIN
 	START TRANSACTION;
-		INSERT INTO charms (charm_name, charm_base_price)
-        VALUES (p_charm_name, p_charm_base_price);
+		INSERT INTO charms (charm_name, charm_base_price, charm_image_url)
+        VALUES (p_charm_name, p_charm_base_price, p_charm_image_url);
     COMMIT;
 END $$
 
@@ -506,7 +507,20 @@ CREATE PROCEDURE remove_product_variant(
     IN p_product_id INT
 )
 BEGIN
-    DELETE FROM product_variants WHERE product_id = p_product_id;
+    START TRANSACTION;
+        DELETE FROM product_variants WHERE product_id = p_product_id;
+    COMMIT;
+END$$
+
+-- ----------------------------------------------------------
+
+CREATE PROCEDURE remove_charm(
+    IN p_charm_id INT
+)
+BEGIN
+    START TRANSACTION;
+        DELETE FROM charms WHERE charm_id = p_charm_id;
+    COMMIT;
 END$$
 
 -- ----------------------------------------------------------
