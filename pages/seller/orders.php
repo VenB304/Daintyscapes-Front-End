@@ -10,7 +10,7 @@ include_once("../../includes/db.php");
 $user_id = $_SESSION['user_id'];
 
 // Allowed statuses
-$allowed_statuses = ['Processing','Pending', 'Shipped', 'Delivered', 'Cancelled'];
+$allowed_statuses = ['Pending','Processing', 'Shipped', 'Delivered', 'Cancelled'];
 
 // Fetch all statuses from DB
 $db_statuses = [];

@@ -33,7 +33,7 @@ $stmt->close();
 <div class="page-container">
     <h1>Your Products</h1>
     <a href="add_product.php" class="btn">Add Product</a>
-    <a href="add_charms.php" class="btn">Add Charms</a>
+    <a href="add_charms.php" class="btn">Go to Charms</a>
     <table class="product-table">
         <thead>
             <tr>

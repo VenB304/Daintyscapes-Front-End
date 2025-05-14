@@ -61,7 +61,7 @@ if (isset($_GET['success'])) {
 </head>
 <div class="page-container">
     <h1>Your Charms</h1>
-    <a href="products.php" class="btn">Back to Products</a>
+    <a href="products.php" class="btn">Go Back to Products</a>
 
     <?php if ($success): ?>
         <div class="success-message"><?= htmlspecialchars($success) ?></div>
@@ -103,7 +103,7 @@ if (isset($_GET['success'])) {
                 <td><?= htmlspecialchars($charm['charm_name']) ?></td>
                 <td>₱<?= number_format($charm['charm_base_price'], 2) ?></td>
                 <td>
-                    <a href="modify_charm.php?id=<?= urlencode($charm['charm_id']) ?>" class="btn">Modify</a>
+                    <a href="modify_charms.php?id=<?= urlencode($charm['charm_id']) ?>" class="btn">Modify</a>
                     <form method="POST" action="add_charms.php" style="display:inline;">
                         <input type="hidden" name="remove_charm_id" value="<?= htmlspecialchars($charm['charm_id']) ?>">
                         <button type="submit" class="btn" onclick="return confirm('Are you sure you want to remove this charm?');">Remove</button>
