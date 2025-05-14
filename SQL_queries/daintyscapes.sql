@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 14, 2025 at 05:51 AM
+-- Generation Time: May 14, 2025 at 07:40 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -42,10 +42,10 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `add_buyer` (IN `p_first_name` VARCH
     COMMIT;
 END$$
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `add_charm` (IN `p_charm_name` VARCHAR(30), IN `p_charm_base_price` DECIMAL(19,4))   BEGIN
-	START TRANSACTION;
-		INSERT INTO charms (charm_name, charm_base_price)
-        VALUES (p_charm_name, p_charm_base_price);
+CREATE DEFINER=`root`@`localhost` PROCEDURE `add_charm` (IN `p_charm_name` VARCHAR(30), IN `p_charm_base_price` DECIMAL(19,4), IN `p_charm_image_url` VARCHAR(255))   BEGIN
+    START TRANSACTION;
+        INSERT INTO charms (charm_name, charm_base_price, charm_image_url)
+        VALUES (p_charm_name, p_charm_base_price, p_charm_image_url);
     COMMIT;
 END$$
 
@@ -351,6 +351,14 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `initialize_add_order_status` ()   B
 	COMMIT;
 END$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `modify_charm` (IN `p_charm_id` INT, IN `p_charm_name` VARCHAR(30), IN `p_charm_base_price` DECIMAL(19,4), IN `p_charm_image_url` VARCHAR(255))   BEGIN
+    UPDATE charms
+    SET charm_name = p_charm_name,
+        charm_base_price = p_charm_base_price,
+        charm_image_url = p_charm_image_url
+    WHERE charm_id = p_charm_id;
+END$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `modify_product` (IN `p_product_id` INT, IN `p_product_category_name` TEXT, IN `p_product_name` VARCHAR(100), IN `p_available_quantity` INT, IN `p_base_price` DECIMAL(19,4))   BEGIN
     DECLARE fk_category_id INT;
 
@@ -372,6 +380,10 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `modify_product` (IN `p_product_id` 
             base_price = p_base_price
         WHERE product_id = p_product_id;
     COMMIT;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `remove_charm` (IN `p_charm_id` INT)   BEGIN
+    DELETE FROM charms WHERE charm_id = p_charm_id;
 END$$
 
 CREATE DEFINER=`root`@`localhost` PROCEDURE `remove_product` (IN `p_product_id` INT)   BEGIN
@@ -498,7 +510,7 @@ INSERT INTO `charms` (`charm_id`, `charm_name`, `charm_base_price`, `charm_image
 (3, 'Mustache', 25.0000, 'https://venb.ddns.net/gallery/daintyscapes/charms/mustache.png'),
 (4, 'Steth', 25.0000, 'https://venb.ddns.net/gallery/daintyscapes/charms/steth.png'),
 (5, 'Elephant', 25.0000, 'https://venb.ddns.net/gallery/daintyscapes/charms/elephant.png'),
-(6, 'Planet', 25.0000, 'https://venb.ddns.net/gallery/daintyscapes/charms/planet.png');
+(7, 'Planet', 25.0000, 'https://venb.ddns.net/gallery/daintyscapes/charms/planet.png');
 
 -- --------------------------------------------------------
 
@@ -525,7 +537,9 @@ INSERT INTO `customizations` (`customization_id`, `buyer_id`, `customized_name`,
 (4, 3, '', '#e9d7b9', 0.0000),
 (5, 3, 'test', '#7b4a1e', 0.0000),
 (6, 3, '', '#e9d7b9', 0.0000),
-(7, 3, 'wrfew', '#7b4a1e', 0.0000);
+(7, 3, 'wrfew', '#7b4a1e', 0.0000),
+(8, 3, '', '#e9d7b9', 0.0000),
+(9, 3, 'rffrg', '#e9d7b9', 0.0000);
 
 -- --------------------------------------------------------
 
@@ -551,7 +565,9 @@ INSERT INTO `customization_charms` (`customization_charm_id`, `customization_id`
 (3, 4, 1, 0, 0),
 (4, 5, 2, 273, 385),
 (5, 6, 3, 0, 0),
-(6, 7, 5, 0, 0);
+(6, 7, 5, 0, 0),
+(7, 8, 3, 262, 319),
+(8, 9, 5, 0, 0);
 
 -- --------------------------------------------------------
 
@@ -574,7 +590,8 @@ INSERT INTO `orders` (`order_id`, `buyer_id`, `status_id`, `order_date`) VALUES
 (1, 3, 8, '2025-05-14'),
 (2, 3, 7, '2025-05-14'),
 (3, 3, 3, '2025-05-14'),
-(4, 3, 2, '2025-05-14');
+(4, 3, 2, '2025-05-14'),
+(5, 3, 1, '2025-05-14');
 
 -- --------------------------------------------------------
 
@@ -601,16 +618,8 @@ CREATE TABLE `order_details` (
 --
 
 INSERT INTO `order_details` (`order_detail_id`, `order_id`, `product_id`, `customization_id`, `charm_id`, `charm_name`, `variant_name`, `variant_url`, `order_quantity`, `base_price_at_order`, `total_price_at_order`) VALUES
-(1, 1, 1, NULL, NULL, '', 'Zombie Hamburglar', 'https://venb.ddns.net/gallery/IMG_20250512_010923_069.jpg', 1, 150.0000, 150.0000),
-(2, 1, 1, 1, NULL, 'Car', 'Birdie Wings', 'https://venb.ddns.net/gallery/received_708802188248720.jpeg', 1, 150.0000, 175.0000),
-(3, 1, 1, 2, NULL, 'Steth', 'Soda Potion', 'https://venb.ddns.net/gallery/received_1100308605190148.jpeg', 1, 150.0000, 175.0000),
-(4, 2, 1, NULL, NULL, '', 'Zombie Hamburglar', 'https://venb.ddns.net/gallery/IMG_20250512_010923_069.jpg', 10, 150.0000, 1500.0000),
-(5, 3, 1, NULL, NULL, '', 'Zombie Hamburglar', 'https://venb.ddns.net/gallery/IMG_20250512_010923_069.jpg', 10, 150.0000, 1500.0000),
-(6, 3, 1, 4, NULL, 'Car', 'Birdie Wings', 'https://venb.ddns.net/gallery/received_708802188248720.jpeg', 13, 150.0000, 2275.0000),
-(7, 3, 1, 5, NULL, 'Small Jet', 'Soda Potion', 'https://venb.ddns.net/gallery/received_1100308605190148.jpeg', 13, 150.0000, 2275.0000),
-(8, 4, 1, NULL, NULL, '', 'Zombie Hamburglar', 'https://venb.ddns.net/gallery/IMG_20250512_010923_069.jpg', 1, 150.0000, 150.0000),
-(9, 4, 1, 6, 3, 'Mustache', 'Zombie Hamburglar', 'https://venb.ddns.net/gallery/IMG_20250512_010923_069.jpg', 1, 150.0000, 175.0000),
-(10, 4, 1, 7, 5, 'Elephant', 'Zombie Hamburglar', 'https://venb.ddns.net/gallery/IMG_20250512_010923_069.jpg', 1, 150.0000, 175.0000);
+(11, 5, 3, 8, 3, 'Mustache', 'Zombie Hamburglar', '/daintyscapes/assets/img/Zombie%20Hamburglar.jpg', 1, 300.0000, 325.0000),
+(12, 5, 2, 9, 5, 'Elephant', 'Red', '/daintyscapes/assets/img/Multi-use%20Wristlet%20Red.png', 1, 150.0000, 175.0000);
 
 -- --------------------------------------------------------
 
@@ -656,7 +665,8 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`product_id`, `category_id`, `product_name`, `available_quantity`, `base_price`) VALUES
-(1, 1, 'Multi-use Wrislet', 948, 150.0000);
+(2, 2, 'Multi-use Wrislet', 999, 150.0000),
+(3, 3, 'Mcdonald\'s Minecraft Toys', 9999, 300.0000);
 
 -- --------------------------------------------------------
 
@@ -674,7 +684,8 @@ CREATE TABLE `product_categories` (
 --
 
 INSERT INTO `product_categories` (`category_id`, `category_name`) VALUES
-(1, 'Multi-use Wrislet');
+(2, 'Multi-use Wrislet'),
+(3, 'Toys');
 
 -- --------------------------------------------------------
 
@@ -694,9 +705,13 @@ CREATE TABLE `product_variants` (
 --
 
 INSERT INTO `product_variants` (`variant_id`, `product_id`, `variant_name`, `image_url`) VALUES
-(1, 1, 'Zombie Hamburglar', 'https://venb.ddns.net/gallery/IMG_20250512_010923_069.jpg'),
-(2, 1, 'Birdie Wings', 'https://venb.ddns.net/gallery/received_708802188248720.jpeg'),
-(3, 1, 'Soda Potion', 'https://venb.ddns.net/gallery/received_1100308605190148.jpeg');
+(36, 2, 'Red', '/daintyscapes/assets/img/Multi-use%20Wristlet%20Red.png'),
+(37, 2, 'LIght Pastel Green', '/daintyscapes/assets/img/Multi-use%20Wristlet%20Light%20Pastel%20Green.png'),
+(38, 2, 'Light Gray', '/daintyscapes/assets/img/Multi-use%20Wristlet%20Light%20Gray.png'),
+(39, 2, 'Gold', '/daintyscapes/assets/img/Multi-use%20Wristlet%20Gold.png'),
+(49, 3, 'Zombie Hamburglar', '/daintyscapes/assets/img/Zombie%20Hamburglar.jpg'),
+(50, 3, 'Birdie Wings', '/daintyscapes/assets/img/Birdie%20WIngs.jpeg'),
+(51, 3, 'Soda Potion', '/daintyscapes/assets/img/Soda%20Potion.jpeg');
 
 -- --------------------------------------------------------
 
@@ -834,31 +849,31 @@ ALTER TABLE `buyers`
 -- AUTO_INCREMENT for table `charms`
 --
 ALTER TABLE `charms`
-  MODIFY `charm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `charm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `customizations`
 --
 ALTER TABLE `customizations`
-  MODIFY `customization_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `customization_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `customization_charms`
 --
 ALTER TABLE `customization_charms`
-  MODIFY `customization_charm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `customization_charm_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `order_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `order_details`
 --
 ALTER TABLE `order_details`
-  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `order_detail_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `order_status`
@@ -870,19 +885,19 @@ ALTER TABLE `order_status`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `product_categories`
 --
 ALTER TABLE `product_categories`
-  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `product_variants`
 --
 ALTER TABLE `product_variants`
-  MODIFY `variant_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `variant_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=52;
 
 --
 -- AUTO_INCREMENT for table `users`
