@@ -150,6 +150,38 @@ END $$
 
 -- ----------------------------------------------------------
 
+CREATE PROCEDURE add_customization (
+    IN p_buyer_id INT, 
+    IN p_customized_name VARCHAR(255), 
+    IN p_customized_name_color VARCHAR(50), 
+    IN p_customization_cost DECIMAL(10,2), 
+    OUT p_customization_id INT
+)   
+BEGIN
+    START TRANSACTION;
+        INSERT INTO customizations (buyer_id, customized_name, customized_name_color, customization_cost)
+        VALUES (p_buyer_id, p_customized_name, p_customized_name_color, p_customization_cost);
+        SET p_customization_id = LAST_INSERT_ID();
+    COMMIT;
+END$$
+
+-- ----------------------------------------------------------
+
+CREATE PROCEDURE add_customization_charm (
+    IN p_customization_id INT, 
+    IN p_charm_id INT, 
+    IN p_x_position INT, 
+    IN p_y_position INT
+)   
+BEGIN
+    START TRANSACTION;
+        INSERT INTO customization_charms (customization_id, charm_id, x_position, y_position)
+        VALUES (p_customization_id, p_charm_id, p_x_position, p_y_position);
+    COMMIT;
+END$$
+
+-- ----------------------------------------------------------
+
 CREATE PROCEDURE add_order_detail(
     IN p_order_id INT,
     IN p_product_id INT,
@@ -173,6 +205,20 @@ BEGIN
         UPDATE products
         SET available_quantity = available_quantity - p_order_quantity
         WHERE product_id = p_product_id;
+    COMMIT;
+END$$
+
+-- ----------------------------------------------------------
+
+
+CREATE PROCEDURE add_order_status (
+    IN p_status_name VARCHAR(255), 
+    OUT p_status_id INT
+)   
+BEGIN
+    START TRANSACTION;
+        INSERT INTO order_status (status_name) VALUES (p_status_name);
+        SET p_status_id = LAST_INSERT_ID();
     COMMIT;
 END$$
 
@@ -225,6 +271,51 @@ BEGIN
 			house_number = p_house_number,
 			postal_code = p_postal_code
 		WHERE user_id = v_user_id;
+    COMMIT;
+END$$
+
+-- ----------------------------------------------------------
+
+CREATE PROCEDURE update_order_status (
+    IN p_order_id INT, 
+    IN p_status_id INT
+)   
+BEGIN
+    START TRANSACTION;
+        UPDATE orders SET status_id = p_status_id WHERE order_id = p_order_id;
+    COMMIT;
+END$$
+
+-- ----------------------------------------------------------
+
+CREATE  PROCEDURE update_buyer_credentials (
+    IN p_username VARCHAR(50), 
+    IN p_password_hash VARCHAR(255), 
+    IN p_buyer_id INT
+)   
+BEGIN
+    START TRANSACTION;
+        UPDATE users
+        INNER JOIN buyers ON users.user_id = buyers.user_id
+        SET users.username = p_username,
+            users.password_hash = p_password_hash
+        WHERE buyers.buyer_id = p_buyer_id;
+    COMMIT;
+END$$
+
+-- ----------------------------------------------------------
+
+CREATE  PROCEDURE update_user_credentials (
+    IN p_username VARCHAR(50), 
+    IN p_password_hash VARCHAR(255), 
+    IN p_user_id INT
+)   
+BEGIN
+    START TRANSACTION;
+        UPDATE users
+        SET username = p_username,
+            password_hash = p_password_hash
+        WHERE user_id = p_user_id;
     COMMIT;
 END$$
 
