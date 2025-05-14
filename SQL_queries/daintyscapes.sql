@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 14, 2025 at 07:40 AM
+-- Generation Time: May 14, 2025 at 08:00 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -591,7 +591,7 @@ INSERT INTO `orders` (`order_id`, `buyer_id`, `status_id`, `order_date`) VALUES
 (2, 3, 7, '2025-05-14'),
 (3, 3, 3, '2025-05-14'),
 (4, 3, 2, '2025-05-14'),
-(5, 3, 1, '2025-05-14');
+(5, 3, 5, '2025-05-14');
 
 -- --------------------------------------------------------
 
